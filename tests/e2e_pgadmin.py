@@ -277,6 +277,10 @@ def main():
                     if open_item.count() > 0:
                         open_item.last.hover(timeout=10000)
                         page.wait_for_timeout(500)
+                        pref_after_hover = page.get_by_text("העדפות", exact=True)
+                        if pref_after_hover.count() == 0 or not pref_after_hover.last.is_visible():
+                            open_item.last.click(timeout=10000)
+                            page.wait_for_timeout(500)
 
                 pref = page.get_by_text("העדפות", exact=True)
                 if pref.count() == 0:
