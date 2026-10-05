@@ -117,6 +117,15 @@ RTL_BLOCK = """
           scrollbar-gutter: stable;
         }
 
+        /* Electron/Chromium may still paint a horizontal overlay scrollbar for
+         * react-arborist's virtualized viewport even when overflow-x computes
+         * to hidden. Hide only the horizontal scrollbar, preserve vertical. */
+        html[dir="rtl"] .PreferencesComponent-treeContainer .PgTree-tree::-webkit-scrollbar:horizontal,
+        html[dir="rtl"] .PreferencesComponent-treeContainer .PgTree-tree *::-webkit-scrollbar:horizontal {
+          height: 0 !important;
+          display: none !important;
+        }
+
         html[dir="rtl"] .PreferencesComponent-treeContainer .PgTree-defaultNode {
           direction: rtl !important;
           text-align: right;
