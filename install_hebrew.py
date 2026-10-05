@@ -107,9 +107,14 @@ RTL_BLOCK = """
 
         html[dir="rtl"] .PreferencesComponent-treeContainer .PgTree-tree,
         html[dir="rtl"] .PreferencesComponent-treeContainer .PgTree-tree > div,
-        html[dir="rtl"] .PreferencesComponent-treeContainer .PgTree-tree [role="tree"] {
+        html[dir="rtl"] .PreferencesComponent-treeContainer .PgTree-tree [role="tree"],
+        html[dir="rtl"] .PreferencesComponent-treeContainer .PgTree-tree div {
           overflow-x: hidden !important;
           max-width: 100% !important;
+        }
+
+        html[dir="rtl"] .PreferencesComponent-treeContainer .PgTree-tree {
+          scrollbar-gutter: stable;
         }
 
         html[dir="rtl"] .PreferencesComponent-treeContainer .PgTree-defaultNode {
@@ -302,10 +307,28 @@ RUNTIME_SHIM = """
     }
   }
 
+  function decodeTechnicalMessageEntities(root) {
+    for (const el of candidates(
+      root,
+      '.FormFooter-message, .FormFooter-messageCenter'
+    )) {
+      const raw = el.textContent || '';
+      if (!/&(?:lt|gt|amp|quot|#39);/i.test(raw)) continue;
+
+      const textarea = document.createElement('textarea');
+      textarea.innerHTML = raw;
+      const decoded = textarea.value;
+      if (decoded !== raw) {
+        el.textContent = decoded;
+      }
+    }
+  }
+
   function apply(root) {
     setAutoDirection(root);
     replaceMenuOpen(root);
     localizeDefaultServerGroup(root);
+    decodeTechnicalMessageEntities(root);
   }
 
   function start() {
