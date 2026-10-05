@@ -44,6 +44,71 @@ RTL_BLOCK = """
           text-align: start;
         }
 
+        /* Keep ordinary form chrome and explanatory copy naturally RTL. */
+        html[dir="rtl"] .Form-label,
+        html[dir="rtl"] .MuiInputLabel-root,
+        html[dir="rtl"] .MuiFormHelperText-root,
+        html[dir="rtl"] .MuiFormControl-root,
+        html[dir="rtl"] .MuiFormControlLabel-root {
+          direction: rtl;
+          text-align: right;
+        }
+
+        html[dir="rtl"] .MuiFormHelperText-root,
+        html[dir="rtl"] .MuiAlert-message,
+        html[dir="rtl"] [role="alert"] {
+          unicode-bidi: plaintext;
+        }
+
+        html[dir="rtl"] .Form-label [data-testid="Error"] {
+          margin-left: 0 !important;
+          margin-right: auto !important;
+        }
+
+        /* pgAdmin Preferences uses physical left/right rules in its MUI styles.
+         * Correct the split-pane divider and keep the Hebrew tree/pane tidy.
+         */
+        html[dir="rtl"] .PreferencesComponent-header,
+        html[dir="rtl"] .PreferencesComponent-body,
+        html[dir="rtl"] .PreferencesComponent-bodyWrap,
+        html[dir="rtl"] .PreferencesComponent-treeContainer,
+        html[dir="rtl"] .PreferencesComponent-preferencesContainer {
+          direction: rtl;
+        }
+
+        html[dir="rtl"] .PreferencesComponent-searchInput {
+          margin-left: 0 !important;
+          margin-right: auto !important;
+        }
+
+        html[dir="rtl"] .PreferencesComponent-bodyWrap {
+          overflow: hidden;
+        }
+
+        html[dir="rtl"] .PreferencesComponent-treeContainer {
+          overflow-x: hidden !important;
+          min-width: 0;
+        }
+
+        html[dir="rtl"] .PreferencesComponent-preferencesContainer {
+          border-left: 0 !important;
+          border-right: 1px solid !important;
+          overflow-x: hidden;
+          min-width: 0;
+        }
+
+        html[dir="rtl"] .PreferencesComponent-preferencesContainer .MuiGrid-root,
+        html[dir="rtl"] .PreferencesComponent-preferencesContainer .MuiFormControl-root,
+        html[dir="rtl"] .PreferencesComponent-preferencesContainerBackground {
+          min-width: 0;
+          max-width: 100%;
+        }
+
+        html[dir="rtl"] .PreferencesComponent-noSelection,
+        html[dir="rtl"] .PreferencesComponent-preferencesContainer .MuiFormHelperText-root {
+          text-align: right;
+        }
+
         html[dir="rtl"] .cm-editor,
         html[dir="rtl"] .cm-editor .cm-scroller,
         html[dir="rtl"] .cm-editor .cm-content,
@@ -63,8 +128,9 @@ RTL_BLOCK = """
         html[dir="rtl"] input[type="password"],
         html[dir="rtl"] input[type="email"],
         html[dir="rtl"] input[type="url"] {
-          direction: ltr;
-          text-align: left;
+          direction: ltr !important;
+          text-align: left !important;
+          unicode-bidi: isolate;
         }
 
         /* Preserve SQL/data-grid column order. */
@@ -171,9 +237,6 @@ def patch_config(text: str) -> tuple[str, bool]:
 
 def patch_base(text: str) -> tuple[str, bool]:
     changed = False
-    if RTL_START in text:
-        # Already patched by this package.
-        return text, False
 
     if HTML_OLD in text:
         text = text.replace(HTML_OLD, HTML_NEW, 1)
@@ -181,9 +244,36 @@ def patch_base(text: str) -> tuple[str, bool]:
     elif "pgadmin_language" not in text or 'dir="{{' not in text:
         raise ValueError("Could not find the expected pgAdmin 9.18 <html lang=...> line in base.html")
 
-    # Inject into the first CSP-protected <style> block. Match structurally
-    # instead of relying on exact whitespace/newline bytes so packaged Windows
-    # checkouts using CRLF behave exactly like upstream LF sources.
+    newline = "\r\n" if "\r\n" in text else "\n"
+    rtl_block = RTL_BLOCK.replace("\n", newline)
+
+    # Upgrade an older Hebrew RTL block in place. This is important for users
+    # rerunning the installer after visual RTL fixes: the original backup stays
+    # untouched, while the installed block is refreshed to the latest package.
+    if RTL_START in text:
+        start_marker = text.find("        /* " + RTL_START)
+        if start_marker < 0:
+            start_marker = text.find("/* " + RTL_START)
+        end_marker = text.find("/* " + RTL_END + " */")
+        if start_marker < 0 or end_marker < 0:
+            raise ValueError("Found an incomplete pgAdmin Hebrew RTL block in base.html")
+        end_marker += len("/* " + RTL_END + " */")
+        # Include the newline after the old block so repeated upgrades do not
+        # accumulate blank lines.
+        if text.startswith("\r\n", end_marker):
+            end_marker += 2
+        elif text.startswith("\n", end_marker):
+            end_marker += 1
+
+        current = text[start_marker:end_marker]
+        replacement = rtl_block
+        if current != replacement:
+            text = text[:start_marker] + replacement + text[end_marker:]
+            changed = True
+        return text, changed
+
+    # First install: inject into the first CSP-protected <style> block. Match
+    # structurally instead of relying on exact whitespace/newline bytes.
     style_open = text.find('<style nonce="{{ csp_nonce }}">')
     if style_open < 0:
         raise ValueError("Could not find the expected CSP style block in base.html")
@@ -194,8 +284,6 @@ def patch_base(text: str) -> tuple[str, bool]:
     if ".pg-sp-text" not in style_segment:
         raise ValueError("Could not find .pg-sp-text in the expected pgAdmin base style block")
 
-    newline = "\r\n" if "\r\n" in text else "\n"
-    rtl_block = RTL_BLOCK.replace("\n", newline)
     text = text[:style_close] + rtl_block + text[style_close:]
     return text, True
 
