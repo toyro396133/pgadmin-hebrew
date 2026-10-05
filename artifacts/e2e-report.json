@@ -31,7 +31,15 @@
       "numberInput": true
     },
     "more_menu_opened": true,
-    "preferences_hebrew": true
+    "preferences_hebrew": true,
+    "preferences_visual_rtl": {
+      "divider_on_right": true,
+      "no_left_divider": true,
+      "tree_x_clipped": true,
+      "helper_rtl": true,
+      "alerts_plaintext": true,
+      "no_page_horizontal_overflow": true
+    }
   },
   "screenshots": [
     "artifacts\\screenshots\\00-main.png",
@@ -40,19 +48,19 @@
   ],
   "errors": [],
   "diagnostics": {
-    "cdp": "http://127.0.0.1:51105",
+    "cdp": "http://127.0.0.1:50838",
     "observed_urls": [
-      "http://127.0.0.1:51107/browser/"
+      "http://127.0.0.1:59253/browser/"
     ],
     "targets": [
       {
         "context": 0,
         "page": 0,
-        "url": "http://127.0.0.1:51107/browser/",
+        "url": "http://127.0.0.1:59253/browser/",
         "closed": false
       }
     ],
-    "selected_url": "http://127.0.0.1:51107/browser/",
+    "selected_url": "http://127.0.0.1:59253/browser/",
     "more_menu_texts": [
       "סגירת הכול\nOpen",
       "סגירת הכול",
@@ -66,7 +74,16 @@
       "לא נבחר אובייקט ",
       "לא נבחר אובייקט "
     ],
-    "preferences_open_method": "quick-link"
+    "preferences_open_method": "quick-link",
+    "preferences_visual": {
+      "borderRightWidth": "1px",
+      "borderLeftWidth": "0px",
+      "treeOverflowX": "hidden",
+      "helperDirection": "rtl",
+      "helperTextAlign": "right",
+      "alertUnicodeBidi": "plaintext",
+      "pageHasHorizontalOverflow": false
+    }
   },
-  "timestamp": "2026-10-06T01:59:23+0300"
+  "timestamp": "2026-10-06T02:08:02+0300"
 }
