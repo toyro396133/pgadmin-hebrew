@@ -58,6 +58,7 @@ def main() -> None:
     assert 'html[dir="rtl"] .FormFooter-message' in patched
     assert '.PreferencesComponent-treeContainer .PgTree-tree > div' in patched
     assert '.PreferencesComponent-treeContainer .PgTree-tree div' in patched
+    assert '::-webkit-scrollbar:horizontal' in patched
     assert '.PreferencesComponent-treeContainer .PgTree-defaultNode' in patched
     assert 'html[dir="rtl"] .file-tree .file-entry' in patched
     assert '.file-entry.depth-2 { padding-right: 16px !important; }' in patched
