@@ -34,13 +34,6 @@ HTML_NEW = (
     'dir="{{ \'rtl\' if pgadmin_language == \'he\' else \'ltr\' }}">'
 )
 
-SPINNER_ANCHOR = """        .pg-sp-text {
-          font-size: 20px;
-          text-align: center;
-          color: #fff;
-        }
-"""
-
 RTL_BLOCK = """
         /* PGADMIN_HEBREW_RTL_START
          * Hebrew is right-to-left, but pgAdmin contains technical surfaces
@@ -188,9 +181,22 @@ def patch_base(text: str) -> tuple[str, bool]:
     elif "pgadmin_language" not in text or 'dir="{{' not in text:
         raise ValueError("Could not find the expected pgAdmin 9.18 <html lang=...> line in base.html")
 
-    if SPINNER_ANCHOR not in text:
-        raise ValueError("Could not find the expected spinner style anchor in base.html")
-    text = text.replace(SPINNER_ANCHOR, SPINNER_ANCHOR + RTL_BLOCK, 1)
+    # Inject into the first CSP-protected <style> block. Match structurally
+    # instead of relying on exact whitespace/newline bytes so packaged Windows
+    # checkouts using CRLF behave exactly like upstream LF sources.
+    style_open = text.find('<style nonce="{{ csp_nonce }}">')
+    if style_open < 0:
+        raise ValueError("Could not find the expected CSP style block in base.html")
+    style_close = text.find("</style>", style_open)
+    if style_close < 0:
+        raise ValueError("Could not find the end of the expected CSP style block in base.html")
+    style_segment = text[style_open:style_close]
+    if ".pg-sp-text" not in style_segment:
+        raise ValueError("Could not find .pg-sp-text in the expected pgAdmin base style block")
+
+    newline = "\r\n" if "\r\n" in text else "\n"
+    rtl_block = RTL_BLOCK.replace("\n", newline)
+    text = text[:style_close] + rtl_block + text[style_close:]
     return text, True
 
 
