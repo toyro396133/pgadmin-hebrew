@@ -244,7 +244,26 @@ RTL_BLOCK = """
         html[dir="rtl"] input[type="number"],
         html[dir="rtl"] input[type="password"],
         html[dir="rtl"] input[type="email"],
-        html[dir="rtl"] input[type="url"] {
+        html[dir="rtl"] input[type="url"],
+        html[dir="rtl"] input[name="host"],
+        html[dir="rtl"] input[name="hostaddr"],
+        html[dir="rtl"] input[name="port"],
+        html[dir="rtl"] input[name="db"],
+        html[dir="rtl"] input[name="username"],
+        html[dir="rtl"] input[name="service"],
+        html[dir="rtl"] input[name="role"],
+        html[dir="rtl"] input[name="file"],
+        html[dir="rtl"] input[name="passfile"],
+        html[dir="rtl"] input[name="sslcert"],
+        html[dir="rtl"] input[name="sslkey"],
+        html[dir="rtl"] input[name="sslrootcert"],
+        html[dir="rtl"] input[name="sslcrl"],
+        html[dir="rtl"] input[name="sslcrldir"],
+        html[dir="rtl"] input[name="tunnel_host"],
+        html[dir="rtl"] input[name="tunnel_port"],
+        html[dir="rtl"] input[name="tunnel_username"],
+        html[dir="rtl"] input[name="tunnel_identity_file"],
+        html[dir="rtl"] textarea[name="connection_string"] {
           direction: ltr !important;
           text-align: left !important;
           unicode-bidi: isolate;
