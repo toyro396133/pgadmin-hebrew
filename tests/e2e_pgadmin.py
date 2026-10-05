@@ -12,7 +12,16 @@ from playwright.sync_api import Error as PlaywrightError
 from playwright.sync_api import TimeoutError as PlaywrightTimeoutError
 from playwright.sync_api import sync_playwright
 
-EXPECTED_HE = ["קובץ", "כלים", "עזרה", "סייר האובייקטים", "ברוכים הבאים"]
+EXPECTED_HE = [
+    "לוח מחוונים",
+    "מאפיינים",
+    "סטטיסטיקות",
+    "תלויות",
+    "אובייקטים תלויים",
+    "תהליכים",
+    "סייר האובייקטים",
+    "ברוכים הבאים",
+]
 
 
 def is_pgadmin_http_url(url: str) -> bool:
@@ -194,8 +203,8 @@ def main():
             found = [x for x in EXPECTED_HE if x in body_text]
             result["checks"]["hebrew_ui_markers"] = {
                 "found": found,
-                "required": 3,
-                "pass": len(found) >= 3,
+                "required": 5,
+                "pass": len(found) >= 5,
             }
 
             tech = page.evaluate(
@@ -225,24 +234,55 @@ def main():
             page.screenshot(path=str(main_shot), full_page=True)
             result["screenshots"].append(str(main_shot))
 
-            try:
-                page.get_by_text("קובץ", exact=True).first.click(timeout=10000)
-                page.wait_for_timeout(500)
-                menu_shot = shots / "01-file-menu.png"
-                page.screenshot(path=str(menu_shot), full_page=True)
-                result["screenshots"].append(str(menu_shot))
-                result["checks"]["file_menu_hebrew"] = True
-            except Exception as exc:
-                result["checks"]["file_menu_hebrew"] = False
-                result["errors"].append(f"File menu: {exc}")
-            try:
-                page.keyboard.press("Escape")
-            except PlaywrightError:
-                pass
+            def open_more_menu():
+                # pgAdmin 9.18 desktop collapses panel actions into the
+                # MoreVert toolbar button at narrower window widths.
+                candidates = [
+                    page.locator('button[title="עוד"]'),
+                    page.locator('button[title="More"]'),
+                ]
+                for candidate in candidates:
+                    if candidate.count() > 0:
+                        candidate.first.click(timeout=10000)
+                        return
+
+                icon = page.locator('svg[data-testid="MoreVertIcon"]')
+                if icon.count() > 0:
+                    icon.first.locator("xpath=ancestor::button[1]").click(timeout=10000)
+                    return
+
+                raise RuntimeError("Could not locate pgAdmin More toolbar button")
 
             try:
-                page.get_by_text("קובץ", exact=True).first.click(timeout=10000)
-                page.get_by_text("העדפות", exact=True).first.click(timeout=10000)
+                open_more_menu()
+                page.wait_for_timeout(500)
+                menu_shot = shots / "01-more-menu.png"
+                page.screenshot(path=str(menu_shot), full_page=True)
+                result["screenshots"].append(str(menu_shot))
+                result["checks"]["more_menu_opened"] = True
+
+                # Capture visible menu text for remote diagnosis.
+                menu_texts = page.locator('[role="menu"], [role="menuitem"]').all_inner_texts()
+                result["diagnostics"]["more_menu_texts"] = menu_texts
+            except Exception as exc:
+                result["checks"]["more_menu_opened"] = False
+                result["errors"].append(f"More menu: {exc}")
+
+            try:
+                # MainMoreToolbar.jsx defines a non-translated parent item
+                # labelled "Open", whose submenu contains closed panels.
+                pref = page.get_by_text("העדפות", exact=True)
+                if pref.count() == 0 or not pref.last.is_visible():
+                    open_item = page.get_by_text("Open", exact=True)
+                    if open_item.count() > 0:
+                        open_item.last.hover(timeout=10000)
+                        page.wait_for_timeout(500)
+
+                pref = page.get_by_text("העדפות", exact=True)
+                if pref.count() == 0:
+                    pref = page.get_by_text("Preferences", exact=True)
+                pref.last.click(timeout=10000)
+
                 page.wait_for_timeout(2000)
                 pref_text = page.locator("body").inner_text(timeout=10000)
                 result["checks"]["preferences_hebrew"] = (
@@ -256,6 +296,9 @@ def main():
                 result["checks"]["preferences_hebrew"] = False
                 result["errors"].append(f"Preferences: {exc}")
                 if page is not None and not page.is_closed():
+                    result["diagnostics"]["failure_body_excerpt"] = (
+                        page.locator("body").inner_text(timeout=10000)[:5000]
+                    )
                     err_shot = shots / "99-error.png"
                     page.screenshot(path=str(err_shot), full_page=True)
                     result["screenshots"].append(str(err_shot))
@@ -267,7 +310,7 @@ def main():
                 result["checks"]["body_direction_rtl"],
                 result["checks"]["hebrew_ui_markers"]["pass"],
                 all(result["checks"]["technical_ltr"].values()),
-                result["checks"].get("file_menu_hebrew", False),
+                result["checks"].get("more_menu_opened", False),
                 result["checks"].get("preferences_hebrew", False),
             ]
             result["status"] = "passed" if all(required) else "failed"
