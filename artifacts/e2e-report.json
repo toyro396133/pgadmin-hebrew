@@ -24,6 +24,13 @@
       "required": 5,
       "pass": true
     },
+    "object_explorer_rtl": {
+      "server_group_found": true,
+      "default_group_localized": true,
+      "row_rtl": true,
+      "row_right_aligned": true,
+      "left_padding_cleared": true
+    },
     "technical_ltr": {
       "codemirror": true,
       "xterm": true,
@@ -31,13 +38,18 @@
       "numberInput": true
     },
     "more_menu_opened": true,
+    "more_menu_localized": true,
     "preferences_hebrew": true,
     "preferences_visual_rtl": {
       "divider_on_right": true,
       "no_left_divider": true,
       "tree_x_clipped": true,
+      "tree_inner_x_clipped": true,
+      "tree_nodes_rtl": true,
       "helper_rtl": true,
       "alerts_plaintext": true,
+      "alerts_auto_direction": true,
+      "technical_input_auto_direction": true,
       "no_page_horizontal_overflow": true
     }
   },
@@ -48,23 +60,32 @@
   ],
   "errors": [],
   "diagnostics": {
-    "cdp": "http://127.0.0.1:50838",
+    "cdp": "http://127.0.0.1:56455",
     "observed_urls": [
-      "http://127.0.0.1:59253/browser/"
+      "http://127.0.0.1:56457/browser/"
     ],
     "targets": [
       {
         "context": 0,
         "page": 0,
-        "url": "http://127.0.0.1:59253/browser/",
+        "url": "http://127.0.0.1:56457/browser/",
         "closed": false
       }
     ],
-    "selected_url": "http://127.0.0.1:59253/browser/",
+    "selected_url": "http://127.0.0.1:56457/browser/",
+    "object_explorer_rtl": {
+      "found": true,
+      "label": "שרתים",
+      "rowDirection": "rtl",
+      "rowTextAlign": "right",
+      "paddingLeft": "0px",
+      "paddingRight": "0px",
+      "toggleTransform": "matrix(-1, 0, 0, 1, 0, 0)"
+    },
     "more_menu_texts": [
-      "סגירת הכול\nOpen",
+      "סגירת הכול\nפתיחה",
       "סגירת הכול",
-      "Open",
+      "פתיחה",
       "אין אפשרויות ",
       "אין אפשרויות ",
       "אין אפשרויות ",
@@ -79,11 +100,15 @@
       "borderRightWidth": "1px",
       "borderLeftWidth": "0px",
       "treeOverflowX": "hidden",
+      "treeInnerOverflowX": "hidden",
+      "treeNodeDirection": "rtl",
       "helperDirection": "rtl",
       "helperTextAlign": "right",
       "alertUnicodeBidi": "plaintext",
+      "alertDirAttribute": "auto",
+      "technicalInputDirAttribute": "auto",
       "pageHasHorizontalOverflow": false
     }
   },
-  "timestamp": "2026-10-06T02:08:02+0300"
+  "timestamp": "2026-10-06T02:19:15+0300"
 }
