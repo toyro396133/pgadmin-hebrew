@@ -293,7 +293,7 @@ RUNTIME_SHIM = """
   function localizeDefaultServerGroup(root) {
     for (const icon of candidates(
       root,
-      '.file-tree .file-entry.depth-1 .file-icon.icon-server_group'
+      '.file-tree .file-entry .file-icon.icon-server_group'
     )) {
       const label = icon.parentElement?.querySelector('.file-name');
       if (label && (label.textContent || '').trim() === 'Servers') {
