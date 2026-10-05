@@ -56,6 +56,15 @@ def main() -> None:
     # Jinja syntax must remain valid after the patch.
     Environment().parse(patched)
 
+    # Windows packaged/source checkouts commonly use CRLF. The runtime patch
+    # must behave identically regardless of newline convention.
+    original_crlf = original.replace("\n", "\r\n")
+    patched_crlf, changed_crlf = installer.patch_base(original_crlf)
+    assert changed_crlf
+    assert "PGADMIN_HEBREW_RTL_START" in patched_crlf
+    assert "\r\n" in patched_crlf
+    Environment().parse(patched_crlf)
+
     # Idempotency: running the patch logic twice must not duplicate anything.
     patched2, changed2 = installer.patch_base(patched)
     assert not changed2
@@ -106,7 +115,7 @@ def main() -> None:
 
     print("RTL QA: OK")
     print(f"Upstream base.html normalized git blob: {actual_sha}")
-    print("Jinja parse: OK")
+    print("Jinja parse: OK (LF + CRLF)")
     print("Idempotency: OK")
     print("Install/restore smoke test: OK")
 
