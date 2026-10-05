@@ -26,6 +26,8 @@ BACKUP_SUFFIX = ".hebrew-9.18.bak"
 INSTALL_MANIFEST = ".pgadmin-hebrew-9.18-install.json"
 RTL_START = "PGADMIN_HEBREW_RTL_START"
 RTL_END = "PGADMIN_HEBREW_RTL_END"
+RUNTIME_START = "PGADMIN_HEBREW_RUNTIME_START"
+RUNTIME_END = "PGADMIN_HEBREW_RUNTIME_END"
 
 HTML_OLD = '<html lang="{{ request.cookies.get(\'PGADMIN_LANGUAGE\') or \'en\' }}">'
 HTML_NEW = (
@@ -56,8 +58,21 @@ RTL_BLOCK = """
 
         html[dir="rtl"] .MuiFormHelperText-root,
         html[dir="rtl"] .MuiAlert-message,
-        html[dir="rtl"] [role="alert"] {
+        html[dir="rtl"] [role="alert"],
+        html[dir="rtl"] .FormFooter-message,
+        html[dir="rtl"] .FormFooter-messageCenter {
           unicode-bidi: plaintext;
+        }
+
+        html[dir="rtl"] .FormFooter-message {
+          margin-left: 0 !important;
+          margin-right: 0.5rem !important;
+          text-align: start;
+        }
+
+        html[dir="rtl"] .FormFooter-closeButton {
+          margin-left: 0 !important;
+          margin-right: auto !important;
         }
 
         html[dir="rtl"] .Form-label [data-testid="Error"] {
@@ -90,6 +105,36 @@ RTL_BLOCK = """
           min-width: 0;
         }
 
+        html[dir="rtl"] .PreferencesComponent-treeContainer .PgTree-tree,
+        html[dir="rtl"] .PreferencesComponent-treeContainer .PgTree-tree > div,
+        html[dir="rtl"] .PreferencesComponent-treeContainer .PgTree-tree [role="tree"] {
+          overflow-x: hidden !important;
+          max-width: 100% !important;
+        }
+
+        html[dir="rtl"] .PreferencesComponent-treeContainer .PgTree-defaultNode {
+          direction: rtl !important;
+          text-align: right;
+          flex-direction: row;
+        }
+
+        html[dir="rtl"] .PreferencesComponent-treeContainer .PgTree-defaultNode > span > svg {
+          transform: scaleX(-1);
+          transform-origin: center;
+        }
+
+        html[dir="rtl"] .PreferencesComponent-treeContainer .PgTree-nodeLabel {
+          direction: rtl;
+          text-align: right;
+        }
+
+        html[dir="rtl"] .PreferencesComponent-treeContainer .PgTree-indentLine {
+          margin-left: 0 !important;
+          margin-right: -36px !important;
+          border-left: 0 !important;
+          border-right: 1px solid currentColor;
+        }
+
         html[dir="rtl"] .PreferencesComponent-preferencesContainer {
           border-left: 0 !important;
           border-right: 1px solid !important;
@@ -107,6 +152,11 @@ RTL_BLOCK = """
         html[dir="rtl"] .PreferencesComponent-noSelection,
         html[dir="rtl"] .PreferencesComponent-preferencesContainer .MuiFormHelperText-root {
           text-align: right;
+        }
+
+        html[dir="rtl"] .PreferencesComponent-preferencesContainer input[type="text"],
+        html[dir="rtl"] .PreferencesComponent-preferencesContainer textarea {
+          unicode-bidi: plaintext;
         }
 
         html[dir="rtl"] .cm-editor,
@@ -142,6 +192,76 @@ RTL_BLOCK = """
           unicode-bidi: plaintext;
         }
         /* PGADMIN_HEBREW_RTL_END */
+"""
+
+RUNTIME_SHIM = """
+<script type="application/javascript" nonce="{{ csp_nonce }}">
+/* PGADMIN_HEBREW_RUNTIME_START */
+(function () {
+  if (document.documentElement.dir !== 'rtl') return;
+
+  function candidates(root, selector) {
+    const out = [];
+    if (root && root.nodeType === 1 && root.matches && root.matches(selector)) {
+      out.push(root);
+    }
+    if (root && root.querySelectorAll) {
+      out.push(...root.querySelectorAll(selector));
+    }
+    return out;
+  }
+
+  function setAutoDirection(root) {
+    const selector = [
+      '.FormFooter-message',
+      '.FormFooter-messageCenter',
+      '.PreferencesComponent-preferencesContainer input[type="text"]',
+      '.PreferencesComponent-preferencesContainer textarea'
+    ].join(',');
+    for (const el of candidates(root, selector)) {
+      el.setAttribute('dir', 'auto');
+    }
+  }
+
+  function replaceMenuOpen(root) {
+    for (const el of candidates(root, '[role="menuitem"]')) {
+      if ((el.textContent || '').trim() !== 'Open') continue;
+      const walker = document.createTreeWalker(el, NodeFilter.SHOW_TEXT);
+      let node;
+      while ((node = walker.nextNode())) {
+        if ((node.nodeValue || '').trim() === 'Open') {
+          node.nodeValue = node.nodeValue.replace('Open', 'פתיחה');
+          break;
+        }
+      }
+    }
+  }
+
+  function apply(root) {
+    setAutoDirection(root);
+    replaceMenuOpen(root);
+  }
+
+  function start() {
+    apply(document);
+    const observer = new MutationObserver((records) => {
+      for (const record of records) {
+        for (const node of record.addedNodes) {
+          if (node.nodeType === 1) apply(node);
+        }
+      }
+    });
+    observer.observe(document.body, {childList: true, subtree: true});
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', start, {once: true});
+  } else {
+    start();
+  }
+}());
+/* PGADMIN_HEBREW_RUNTIME_END */
+</script>
 """
 
 
@@ -246,10 +366,9 @@ def patch_base(text: str) -> tuple[str, bool]:
 
     newline = "\r\n" if "\r\n" in text else "\n"
     rtl_block = RTL_BLOCK.replace("\n", newline)
+    runtime_shim = RUNTIME_SHIM.replace("\n", newline)
 
-    # Upgrade an older Hebrew RTL block in place. This lets repeated installs
-    # pick up visual RTL improvements while preserving the one-time backup of
-    # the untouched upstream base.html.
+    # Upgrade an older Hebrew RTL block in place.
     block_re = re.compile(
         r"(?:\r?\n)?[ \t]*/\* " + re.escape(RTL_START) +
         r".*?[ \t]*/\* " + re.escape(RTL_END) + r" \*/(?:\r?\n)?",
@@ -257,29 +376,62 @@ def patch_base(text: str) -> tuple[str, bool]:
     )
     existing = block_re.search(text)
     if existing:
-        current = existing.group(0)
-        if current != rtl_block:
+        if existing.group(0) != rtl_block:
             text = text[:existing.start()] + rtl_block + text[existing.end():]
             changed = True
-        return text, changed
+    else:
+        if RTL_START in text or RTL_END in text:
+            raise ValueError("Found an incomplete pgAdmin Hebrew RTL block in base.html")
 
-    if RTL_START in text or RTL_END in text:
-        raise ValueError("Found an incomplete pgAdmin Hebrew RTL block in base.html")
+        style_open = text.find('<style nonce="{{ csp_nonce }}">')
+        if style_open < 0:
+            raise ValueError("Could not find the expected CSP style block in base.html")
+        style_close = text.find("</style>", style_open)
+        if style_close < 0:
+            raise ValueError("Could not find the end of the expected CSP style block in base.html")
+        style_segment = text[style_open:style_close]
+        if ".pg-sp-text" not in style_segment:
+            raise ValueError("Could not find .pg-sp-text in the expected pgAdmin base style block")
+        text = text[:style_close] + rtl_block + text[style_close:]
+        changed = True
 
-    # First install: inject into the first CSP-protected <style> block. Match
-    # structurally instead of relying on exact whitespace/newline bytes.
-    style_open = text.find('<style nonce="{{ csp_nonce }}">')
-    if style_open < 0:
-        raise ValueError("Could not find the expected CSP style block in base.html")
-    style_close = text.find("</style>", style_open)
-    if style_close < 0:
-        raise ValueError("Could not find the end of the expected CSP style block in base.html")
-    style_segment = text[style_open:style_close]
-    if ".pg-sp-text" not in style_segment:
-        raise ValueError("Could not find .pg-sp-text in the expected pgAdmin base style block")
+    # Runtime shim handles the few UI fragments that are generated dynamically
+    # and cannot be corrected reliably with static CSS/gettext alone.
+    runtime_re = re.compile(
+        r"(?:\r?\n)?<script[^>]*>[ \t]*\r?\n?/\* " +
+        re.escape(RUNTIME_START) +
+        r".*?/\* " + re.escape(RUNTIME_END) +
+        r" \*/[ \t]*\r?\n?</script>(?:\r?\n)?",
+        re.DOTALL,
+    )
+    existing_runtime = runtime_re.search(text)
+    if existing_runtime:
+        if existing_runtime.group(0) != runtime_shim:
+            text = (
+                text[:existing_runtime.start()]
+                + runtime_shim
+                + text[existing_runtime.end():]
+            )
+            changed = True
+    else:
+        if RUNTIME_START in text or RUNTIME_END in text:
+            raise ValueError("Found an incomplete pgAdmin Hebrew runtime shim in base.html")
 
-    text = text[:style_close] + rtl_block + text[style_close:]
-    return text, True
+        body_anchor = (
+            '<script type="application/javascript" nonce="{{ csp_nonce }}">'
+            + newline
+            + '            {% block init_script %}{% endblock %}'
+            + newline
+            + '</script>'
+        )
+        anchor_pos = text.find(body_anchor)
+        if anchor_pos < 0:
+            raise ValueError("Could not find the pgAdmin init_script anchor in base.html")
+        insert_at = anchor_pos + len(body_anchor)
+        text = text[:insert_at] + runtime_shim + text[insert_at:]
+        changed = True
+
+    return text, changed
 
 
 def write_text_preserving_newlines(path: Path, text: str) -> None:
