@@ -144,6 +144,36 @@ if (-not $ready) {
   throw "pgAdmin did not expose Chromium DevTools at $cdp ($state)."
 }
 
+# DevTools comes up on Electron's splash window before the real pgAdmin
+# BrowserWindow exists. Wait for an HTTP page target so the E2E never attaches
+# to file://.../splash.html while it is being closed.
+$webTargetReady = $false
+$lastTargets = @()
+for ($i=0; $i -lt 90; $i++) {
+  if ($proc.HasExited) { break }
+  try {
+    $targets = @(Invoke-RestMethod "$cdp/json/list" -TimeoutSec 2)
+    $lastTargets = @($targets | ForEach-Object { "$($_.type) $($_.url)" })
+    $webTarget = $targets | Where-Object {
+      $_.type -eq 'page' -and $_.url -match '^http://(127\.0\.0\.1|localhost):'
+    } | Select-Object -First 1
+    if ($webTarget) {
+      Write-Host "pgAdmin web target detected: $($webTarget.url)"
+      $webTargetReady = $true
+      break
+    }
+  } catch {}
+  Start-Sleep -Milliseconds 500
+}
+if (-not $webTargetReady) {
+  if (-not $KeepPgAdmin -and -not $proc.HasExited) {
+    Stop-Process -Id $proc.Id -Force -ErrorAction SilentlyContinue
+  }
+  $state = if ($proc.HasExited) { "pgAdmin exited with code $($proc.ExitCode)" } else { "pgAdmin is still running" }
+  $targetsText = if ($lastTargets.Count) { $lastTargets -join '; ' } else { '<none>' }
+  throw "DevTools started, but the real pgAdmin web target did not appear ($state). Last targets: $targetsText"
+}
+
 $exitCode = 0
 try {
   & $VenvPython .\tests\e2e_pgadmin.py --cdp $cdp --screenshots .\artifacts\screenshots --report .\artifacts\e2e-report.json
