@@ -159,6 +159,59 @@ RTL_BLOCK = """
           unicode-bidi: plaintext;
         }
 
+        /* Mirror the Object Explorer tree itself, not only its containing pane. */
+        html[dir="rtl"] .browser-tree .file-tree,
+        html[dir="rtl"] .browser-tree .file-entry,
+        html[dir="rtl"] .browser-tree .file-label,
+        html[dir="rtl"] .browser-tree .file-name {
+          direction: rtl !important;
+          text-align: right !important;
+        }
+
+        html[dir="rtl"] .browser-tree .file-entry {
+          padding-left: 0 !important;
+          padding-right: 2px !important;
+        }
+
+        html[dir="rtl"] .browser-tree .file-entry.depth-1 { padding-right: 0 !important; }
+        html[dir="rtl"] .browser-tree .file-entry.depth-2 { padding-right: 16px !important; }
+        html[dir="rtl"] .browser-tree .file-entry.depth-3 { padding-right: 32px !important; }
+        html[dir="rtl"] .browser-tree .file-entry.depth-4 { padding-right: 48px !important; }
+        html[dir="rtl"] .browser-tree .file-entry.depth-5 { padding-right: 64px !important; }
+        html[dir="rtl"] .browser-tree .file-entry.depth-6 { padding-right: 80px !important; }
+        html[dir="rtl"] .browser-tree .file-entry.depth-7 { padding-right: 96px !important; }
+        html[dir="rtl"] .browser-tree .file-entry.depth-8 { padding-right: 112px !important; }
+        html[dir="rtl"] .browser-tree .file-entry.depth-9 { padding-right: 128px !important; }
+        html[dir="rtl"] .browser-tree .file-entry.depth-10 { padding-right: 144px !important; }
+        html[dir="rtl"] .browser-tree .file-entry.depth-11 { padding-right: 160px !important; }
+        html[dir="rtl"] .browser-tree .file-entry.depth-12 { padding-right: 176px !important; }
+
+        html[dir="rtl"] .browser-tree .file-entry > i.directory-toggle:before {
+          margin-left: 0 !important;
+          margin-right: 5px !important;
+          transform: scaleX(-1) !important;
+        }
+
+        html[dir="rtl"] .browser-tree .file-entry > i.directory-toggle.open:before {
+          transform: none !important;
+        }
+
+        html[dir="rtl"] .browser-tree .file-label {
+          margin-left: 0 !important;
+          margin-right: 2px !important;
+        }
+
+        html[dir="rtl"] .browser-tree .file-entry.file .file-label,
+        html[dir="rtl"] .browser-tree .file-entry.prompt.new .file-label {
+          margin-left: 0 !important;
+          margin-right: 18px !important;
+        }
+
+        html[dir="rtl"] .browser-tree .file-entry:before {
+          transform: scaleX(-1);
+          transform-origin: center;
+        }
+
         html[dir="rtl"] .cm-editor,
         html[dir="rtl"] .cm-editor .cm-scroller,
         html[dir="rtl"] .cm-editor .cm-content,
@@ -237,9 +290,22 @@ RUNTIME_SHIM = """
     }
   }
 
+  function localizeDefaultServerGroup(root) {
+    for (const icon of candidates(
+      root,
+      '.browser-tree .file-entry.depth-1 .file-icon.icon-server_group'
+    )) {
+      const label = icon.parentElement?.querySelector('.file-name');
+      if (label && (label.textContent || '').trim() === 'Servers') {
+        label.textContent = 'שרתים';
+      }
+    }
+  }
+
   function apply(root) {
     setAutoDirection(root);
     replaceMenuOpen(root);
+    localizeDefaultServerGroup(root);
   }
 
   function start() {
