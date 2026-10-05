@@ -51,6 +51,11 @@ def main() -> None:
     assert 'html[dir="rtl"] .cm-editor' in patched
     assert 'html[dir="rtl"] .xterm' in patched
     assert 'html[dir="rtl"] .rdg' in patched
+    assert 'html[dir="rtl"] .PreferencesComponent-preferencesContainer' in patched
+    assert 'border-right: 1px solid !important' in patched
+    assert 'overflow-x: hidden !important' in patched
+    assert 'html[dir="rtl"] .MuiAlert-message' in patched
+    assert "unicode-bidi: plaintext" in patched
     assert "direction: ltr" in patched
 
     # Jinja syntax must remain valid after the patch.
@@ -70,6 +75,20 @@ def main() -> None:
     assert not changed2
     assert patched2 == patched
     assert patched2.count("PGADMIN_HEBREW_RTL_START") == 1
+
+    # Upgrade path: an installed older block must be replaced in-place by the
+    # current visual RTL block, and the result must then be idempotent.
+    stale = patched.replace(
+        "border-right: 1px solid !important;",
+        "border-right: 0;",
+        1,
+    )
+    upgraded, upgraded_changed = installer.patch_base(stale)
+    assert upgraded_changed
+    assert upgraded == patched
+    upgraded2, upgraded_changed2 = installer.patch_base(upgraded)
+    assert not upgraded_changed2
+    assert upgraded2 == patched
 
     # Config registration is idempotent too.
     config = "LANGUAGES = {\n    'en': 'English',\n    'sv': 'Swedish'\n}\n"
@@ -117,6 +136,7 @@ def main() -> None:
     print(f"Upstream base.html normalized git blob: {actual_sha}")
     print("Jinja parse: OK (LF + CRLF)")
     print("Idempotency: OK")
+    print("Installed RTL block upgrade: OK")
     print("Install/restore smoke test: OK")
 
 
