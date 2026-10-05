@@ -1,9 +1,54 @@
 {
   "status": "failed",
-  "checks": {},
-  "screenshots": [],
-  "errors": [
-    "TargetClosedError('Page.wait_for_function: Target page, context or browser has been closed')"
+  "checks": {
+    "language_preference_api": {
+      "ok": true,
+      "status": 200,
+      "endpoint": "/preferences/update",
+      "text": "{\"success\":1,\"errormsg\":\"\",\"info\":\"\",\"result\":null,\"data\":{\"data\":\"Success\"}}"
+    },
+    "html_lang_he": true,
+    "html_dir_rtl": true,
+    "body_direction_rtl": true,
+    "hebrew_ui_markers": {
+      "found": [
+        "סייר האובייקטים",
+        "ברוכים הבאים"
+      ],
+      "required": 3,
+      "pass": false
+    },
+    "technical_ltr": {
+      "codemirror": true,
+      "xterm": true,
+      "grid": true,
+      "numberInput": true
+    },
+    "file_menu_hebrew": false,
+    "preferences_hebrew": false
+  },
+  "screenshots": [
+    "artifacts\\screenshots\\00-main.png",
+    "artifacts\\screenshots\\99-error.png"
   ],
-  "timestamp": "2026-10-06T01:45:30+0300"
+  "errors": [
+    "File menu: Locator.click: Timeout 10000ms exceeded.\nCall log:\n  - waiting for get_by_text(\"קובץ\", exact=True).first\n",
+    "Preferences: Locator.click: Timeout 10000ms exceeded.\nCall log:\n  - waiting for get_by_text(\"קובץ\", exact=True).first\n"
+  ],
+  "diagnostics": {
+    "cdp": "http://127.0.0.1:61521",
+    "observed_urls": [
+      "http://127.0.0.1:61523/browser/"
+    ],
+    "targets": [
+      {
+        "context": 0,
+        "page": 0,
+        "url": "http://127.0.0.1:61523/browser/",
+        "closed": false
+      }
+    ],
+    "selected_url": "http://127.0.0.1:61523/browser/"
+  },
+  "timestamp": "2026-10-06T01:50:11+0300"
 }
