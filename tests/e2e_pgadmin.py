@@ -472,6 +472,291 @@ def main():
                     page.screenshot(path=str(err_shot), full_page=True)
                     result["screenshots"].append(str(err_shot))
 
+            # Return to Dashboard before testing object context menus and
+            # the non-destructive Register Server dialog.
+            try:
+                dash_tab = page.get_by_text("לוח מחוונים", exact=True)
+                if dash_tab.count() > 0:
+                    dash_tab.first.click(timeout=10000)
+                    page.wait_for_timeout(800)
+            except Exception as exc:
+                result["errors"].append(f"Return to Dashboard: {exc}")
+
+            # Object Explorer context menu on the server-group root.
+            try:
+                server_group_icon = page.locator(
+                    '.file-tree .file-entry .file-icon.icon-server_group'
+                ).first
+                server_group_row = server_group_icon.locator(
+                    'xpath=ancestor::div[contains(@class,"file-entry")][1]'
+                )
+                server_group_row.click(button="right", timeout=10000)
+                page.wait_for_selector('[role="menu"]', timeout=10000)
+                page.wait_for_timeout(400)
+
+                context_items = [
+                    t.strip()
+                    for t in page.locator('[role="menuitem"]').all_inner_texts()
+                    if t.strip()
+                ]
+                context_visual = page.evaluate(
+                    """() => {
+                      const menu = Array.from(
+                        document.querySelectorAll('[role="menu"]')
+                      ).find((el) => {
+                        const r = el.getBoundingClientRect();
+                        return r.width > 0 && r.height > 0;
+                      });
+                      const cs = menu ? getComputedStyle(menu) : null;
+                      return {
+                        found: Boolean(menu),
+                        direction: cs ? cs.direction : null,
+                        textAlign: cs ? cs.textAlign : null,
+                      };
+                    }"""
+                )
+                result["diagnostics"]["server_group_context_menu"] = {
+                    "items": context_items,
+                    **context_visual,
+                }
+                hebrew_context_items = sum(
+                    1
+                    for item in context_items
+                    if any("\u0590" <= ch <= "\u05ff" for ch in item)
+                )
+                result["checks"]["server_group_context_menu_rtl"] = {
+                    "menu_found": bool(context_visual["found"]),
+                    "menu_rtl": context_visual["direction"] == "rtl",
+                    "has_items": len(context_items) > 0,
+                    "has_hebrew_items": hebrew_context_items > 0,
+                }
+
+                context_shot = shots / "03-object-context-menu.png"
+                page.screenshot(path=str(context_shot), full_page=True)
+                result["screenshots"].append(str(context_shot))
+            except Exception as exc:
+                result["checks"]["server_group_context_menu_rtl"] = {
+                    "menu_found": False,
+                }
+                result["errors"].append(f"Server-group context menu: {exc}")
+            finally:
+                try:
+                    page.keyboard.press("Escape")
+                    page.wait_for_timeout(300)
+                except PlaywrightError:
+                    pass
+
+            # Register Server dialog. Open and inspect only; never submit/save.
+            try:
+                add_server = page.get_by_text("הוספת שרת חדש", exact=True)
+                if add_server.count() == 0:
+                    raise RuntimeError("Add New Server quick link was not found")
+                add_server.first.click(timeout=10000)
+
+                dialog = page.locator(".MuiDialog-root").last
+                dialog.wait_for(state="visible", timeout=15000)
+                page.wait_for_timeout(1000)
+
+                dialog_text = dialog.inner_text(timeout=10000)
+                dialog_visual = dialog.evaluate(
+                    """(el) => {
+                      const cs = getComputedStyle(el);
+                      return {
+                        direction: cs.direction,
+                        textAlign: cs.textAlign,
+                        hasHorizontalOverflow:
+                          el.scrollWidth > el.clientWidth + 1,
+                      };
+                    }"""
+                )
+                general_markers = ["רישום", "שרת", "כללי", "שם", "חיבור"]
+                result["diagnostics"]["register_server_general"] = {
+                    "markers_found": [
+                        x for x in general_markers if x in dialog_text
+                    ],
+                    **dialog_visual,
+                }
+                result["checks"]["register_server_dialog_rtl"] = {
+                    "dialog_rtl": dialog_visual["direction"] == "rtl",
+                    "hebrew_markers":
+                        sum(1 for x in general_markers if x in dialog_text) >= 4,
+                    "no_horizontal_overflow":
+                        not dialog_visual["hasHorizontalOverflow"],
+                }
+
+                register_general_shot = shots / "04-register-server.png"
+                page.screenshot(path=str(register_general_shot), full_page=True)
+                result["screenshots"].append(str(register_general_shot))
+
+                connection_tab = page.get_by_text("חיבור", exact=True)
+                if connection_tab.count() == 0:
+                    raise RuntimeError("Register Server Connection tab not found")
+                connection_tab.last.click(timeout=10000)
+                page.wait_for_timeout(800)
+
+                connection_text = dialog.inner_text(timeout=10000)
+                connection_markers = [
+                    "שם/כתובת מארח",
+                    "יציאה",
+                    "מסד נתונים לתחזוקה",
+                    "שם משתמש",
+                    "סיסמה",
+                ]
+                technical_fields = dialog.evaluate(
+                    """(root) => {
+                      const wanted = [
+                        'host', 'hostaddr', 'port', 'db',
+                        'username', 'password', 'service'
+                      ];
+                      const out = {};
+                      for (const name of wanted) {
+                        const el = root.querySelector(
+                          'input[name="' + name + '"], textarea[name="' + name + '"]'
+                        );
+                        if (!el) continue;
+                        const cs = getComputedStyle(el);
+                        out[name] = {
+                          direction: cs.direction,
+                          textAlign: cs.textAlign,
+                          type: el.getAttribute('type'),
+                        };
+                      }
+                      return out;
+                    }"""
+                )
+                result["diagnostics"]["register_server_connection"] = {
+                    "markers_found": [
+                        x for x in connection_markers if x in connection_text
+                    ],
+                    "technical_fields": technical_fields,
+                }
+
+                required_technical = [
+                    name
+                    for name in ("host", "port", "db", "username", "password")
+                    if name in technical_fields
+                ]
+                result["checks"]["register_server_connection_form"] = {
+                    "hebrew_markers":
+                        sum(
+                            1 for x in connection_markers
+                            if x in connection_text
+                        ) >= 4,
+                    "technical_fields_found": len(required_technical) >= 3,
+                    "technical_fields_ltr":
+                        bool(required_technical)
+                        and all(
+                            technical_fields[name]["direction"] == "ltr"
+                            for name in required_technical
+                        ),
+                }
+
+                register_connection_shot = (
+                    shots / "05-register-server-connection.png"
+                )
+                page.screenshot(
+                    path=str(register_connection_shot),
+                    full_page=True,
+                )
+                result["screenshots"].append(
+                    str(register_connection_shot)
+                )
+
+            except Exception as exc:
+                result["checks"].setdefault(
+                    "register_server_dialog_rtl",
+                    {"dialog_rtl": False},
+                )
+                result["checks"].setdefault(
+                    "register_server_connection_form",
+                    {"hebrew_markers": False},
+                )
+                result["errors"].append(f"Register Server dialog: {exc}")
+                try:
+                    if page.locator(".MuiDialog-root").count() > 0:
+                        err_shot = shots / "98-register-server-error.png"
+                        page.screenshot(path=str(err_shot), full_page=True)
+                        result["screenshots"].append(str(err_shot))
+                except Exception:
+                    pass
+            finally:
+                # Explicitly cancel. Never submit the form or persist a server.
+                try:
+                    cancel = page.locator(
+                        'button[data-label="ביטול"], '
+                        'button[data-label="Cancel"]'
+                    )
+                    if cancel.count() > 0 and cancel.last.is_visible():
+                        cancel.last.click(timeout=5000)
+                    else:
+                        page.keyboard.press("Escape")
+                    page.wait_for_timeout(500)
+                except Exception:
+                    try:
+                        page.keyboard.press("Escape")
+                    except PlaywrightError:
+                        pass
+
+            # Discover existing server capabilities without creating or
+            # connecting anything. Connected-only scenarios are reported as
+            # available/skipped for the next E2E layer.
+            try:
+                server_group_icon = page.locator(
+                    '.file-tree .file-entry .file-icon.icon-server_group'
+                ).first
+                server_group_row = server_group_icon.locator(
+                    'xpath=ancestor::div[contains(@class,"file-entry")][1]'
+                )
+                toggle = server_group_row.locator("i.directory-toggle")
+                if toggle.count() > 0:
+                    classes = toggle.first.get_attribute("class") or ""
+                    if "open" not in classes:
+                        toggle.first.click(timeout=10000)
+                        page.wait_for_timeout(1200)
+
+                server_inventory = page.evaluate(
+                    """() => Array.from(
+                      document.querySelectorAll('.file-tree .file-entry')
+                    ).map((row) => {
+                      const icon = row.querySelector(
+                        '.file-icon.icon-server, '
+                        + '.file-icon.icon-server-not-connected, '
+                        + '.file-icon.icon-shared-server-not-connected'
+                      );
+                      if (!icon) return null;
+                      return {
+                        label:
+                          row.querySelector('.file-name')?.textContent?.trim()
+                          || '',
+                        iconClass: icon.className,
+                        connected:
+                          icon.classList.contains('icon-server')
+                          && !icon.classList.contains(
+                            'icon-server-not-connected'
+                          ),
+                      };
+                    }).filter(Boolean)"""
+                )
+                result["diagnostics"]["server_inventory"] = server_inventory
+                result["checks"]["connected_database_scenarios"] = {
+                    "status": (
+                        "available"
+                        if any(x.get("connected") for x in server_inventory)
+                        else "skipped"
+                    ),
+                    "reason": (
+                        None
+                        if any(x.get("connected") for x in server_inventory)
+                        else "No already-connected server detected; no connection was attempted."
+                    ),
+                }
+            except Exception as exc:
+                result["diagnostics"]["server_inventory_error"] = str(exc)
+                result["checks"]["connected_database_scenarios"] = {
+                    "status": "skipped",
+                    "reason": f"Inventory failed without mutating state: {exc}",
+                }
+
             required = [
                 bool(result["checks"]["language_preference_api"].get("ok")),
                 result["checks"]["html_lang_he"],
@@ -485,6 +770,21 @@ def main():
                 result["checks"].get("preferences_hebrew", False),
                 all(
                     result["checks"].get("preferences_visual_rtl", {}).values()
+                ),
+                all(
+                    result["checks"].get(
+                        "server_group_context_menu_rtl", {}
+                    ).values()
+                ),
+                all(
+                    result["checks"].get(
+                        "register_server_dialog_rtl", {}
+                    ).values()
+                ),
+                all(
+                    result["checks"].get(
+                        "register_server_connection_form", {}
+                    ).values()
                 ),
             ]
             result["status"] = "passed" if all(required) else "failed"
