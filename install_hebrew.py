@@ -102,8 +102,6 @@ def candidate_web_paths() -> list[Path]:
         for root in filter(None, roots):
             rootp = Path(root)
             candidates.extend(rootp.glob("PostgreSQL/*/pgAdmin 4/web"))
-            candidates.extend(rootp.glob("pgAdmin 4/v*/web"))
-            candidates.extend(rootp.glob("Programs/pgAdmin 4/v*/web"))
             candidates.append(rootp / "pgAdmin 4" / "web")
             candidates.append(rootp / "Programs" / "pgAdmin 4" / "web")
     else:
