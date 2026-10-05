@@ -11,15 +11,12 @@ Set-Location $Root
 function Find-WebPath {
   param([string]$Explicit)
   if ($Explicit) { return (Resolve-Path $Explicit).Path }
-  $candidates = @()
+  $candidates = @(
+    "$env:ProgramFiles\pgAdmin 4\web",
+    "$env:LOCALAPPDATA\Programs\pgAdmin 4\web"
+  )
   if ($env:ProgramFiles) {
-    $candidates += "$env:ProgramFiles\pgAdmin 4\web"
-    $candidates += Get-ChildItem "$env:ProgramFiles\pgAdmin 4" -Directory -Filter 'v*' -ErrorAction SilentlyContinue | ForEach-Object { Join-Path $_.FullName 'web' }
     $candidates += Get-ChildItem "$env:ProgramFiles\PostgreSQL" -Directory -ErrorAction SilentlyContinue | ForEach-Object { Join-Path $_.FullName 'pgAdmin 4\web' }
-  }
-  if ($env:LOCALAPPDATA) {
-    $candidates += "$env:LOCALAPPDATA\Programs\pgAdmin 4\web"
-    $candidates += Get-ChildItem "$env:LOCALAPPDATA\Programs\pgAdmin 4" -Directory -Filter 'v*' -ErrorAction SilentlyContinue | ForEach-Object { Join-Path $_.FullName 'web' }
   }
   $found = @($candidates | Where-Object { $_ -and (Test-Path (Join-Path $_ 'config.py')) })
   if ($found.Count -eq 1) { return (Resolve-Path $found[0]).Path }
@@ -51,35 +48,17 @@ New-Item -ItemType Directory -Force -Path $Screens | Out-Null
 Get-ChildItem $Screens -File -ErrorAction SilentlyContinue | Remove-Item -Force
 Remove-Item (Join-Path $Artifacts 'e2e-report.json') -Force -ErrorAction SilentlyContinue
 
-# Keep test dependencies isolated from the user's global Python.
-$VenvPython = Join-Path $Root '.venv\Scripts\python.exe'
-if (-not (Test-Path $VenvPython)) {
-  Write-Host 'Creating local Python virtual environment...'
-  & python -m venv .venv
-  if ($LASTEXITCODE -ne 0) { throw 'Failed to create .venv.' }
-}
-
-# Browser download is not needed; Playwright attaches to pgAdmin's Electron via CDP.
-& $VenvPython -m pip install --disable-pip-version-check -q Babel==2.18.0 Jinja2 playwright
-if ($LASTEXITCODE -ne 0) { throw 'Failed to install test dependencies into .venv.' }
+# Python dependencies used by QA/E2E. Browser download is not needed; we attach to pgAdmin's Electron via CDP.
+python -m pip install --disable-pip-version-check -q Babel==2.18.0 Jinja2 playwright
 
 # Static/local QA first.
-& $VenvPython .\qa_translation.py
-if ($LASTEXITCODE -ne 0) { throw 'qa_translation.py failed.' }
-& $VenvPython .\verify_keyset.py
-if ($LASTEXITCODE -ne 0) { throw 'verify_keyset.py failed.' }
-& $VenvPython .\verify_rtl.py
-if ($LASTEXITCODE -ne 0) { throw 'verify_rtl.py failed.' }
-if (Test-Path .\messages-v9.18.pot) {
-  & $VenvPython .\verify_upstream.py .\messages-v9.18.pot
-  if ($LASTEXITCODE -ne 0) { throw 'verify_upstream.py failed.' }
-} else {
-  Write-Host 'Upstream POT file not present; offline REL-9_18 key-set fingerprint already verified.'
-}
+python .\qa_translation.py
+python .\verify_keyset.py
+python .\verify_rtl.py
+if (Test-Path .\messages-v9.18.pot) { python .\verify_upstream.py .\messages-v9.18.pot } else { Write-Host 'Upstream POT file not present; offline REL-9_18 key-set fingerprint already verified.' }
 
 # Install Hebrew + RTL into the detected pgAdmin 9.18 tree.
-& powershell -ExecutionPolicy Bypass -File .\install-hebrew.ps1 -WebPath $WebPath -Python $VenvPython
-if ($LASTEXITCODE -ne 0) { throw 'Hebrew installation failed.' }
+powershell -ExecutionPolicy Bypass -File .\install-hebrew.ps1 -WebPath $WebPath
 
 # A clean Electron launch is required for DevTools/CDP attachment.
 $running = Get-Process pgAdmin4 -ErrorAction SilentlyContinue
@@ -102,7 +81,7 @@ if (-not $ready) {
 
 $exitCode = 0
 try {
-  & $VenvPython .\tests\e2e_pgadmin.py --cdp $cdp --screenshots .\artifacts\screenshots --report .\artifacts\e2e-report.json
+  python .\tests\e2e_pgadmin.py --cdp $cdp --screenshots .\artifacts\screenshots --report .\artifacts\e2e-report.json
   $exitCode = $LASTEXITCODE
 } finally {
   if (-not $KeepPgAdmin) { Stop-Process -Id $proc.Id -Force -ErrorAction SilentlyContinue }
@@ -114,14 +93,8 @@ if (-not $NoPush) {
   $changes = git status --porcelain -- artifacts
   if ($changes) {
     $stamp = Get-Date -Format 'yyyy-MM-dd HH:mm:ss'
-    $gitName = git config user.name
-    if (-not $gitName) { git config user.name 'pgAdmin Hebrew QA' }
-    $gitEmail = git config user.email
-    if (-not $gitEmail) { git config user.email 'pgadmin-hebrew-qa@users.noreply.github.com' }
     git commit -m "test: refresh Hebrew pgAdmin E2E artifacts ($stamp)"
-    if ($LASTEXITCODE -ne 0) { throw 'Failed to commit E2E artifacts.' }
     git push origin HEAD
-    if ($LASTEXITCODE -ne 0) { throw 'Failed to push E2E artifacts.' }
   } else {
     Write-Host 'No artifact changes to commit.'
   }
