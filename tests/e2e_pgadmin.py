@@ -207,6 +207,36 @@ def main():
                 "pass": len(found) >= 5,
             }
 
+            object_tree = page.evaluate(
+                """() => {
+                  const icon = document.querySelector(
+                    '.file-tree .file-entry .file-icon.icon-server_group'
+                  );
+                  const row = icon?.closest('.file-entry') || null;
+                  const label = row?.querySelector('.file-name') || null;
+                  const toggle = row?.querySelector('i.directory-toggle') || null;
+                  const rs = row ? getComputedStyle(row) : null;
+                  const ts = toggle ? getComputedStyle(toggle, '::before') : null;
+                  return {
+                    found: Boolean(row),
+                    label: label ? label.textContent.trim() : null,
+                    rowDirection: rs ? rs.direction : null,
+                    rowTextAlign: rs ? rs.textAlign : null,
+                    paddingLeft: rs ? rs.paddingLeft : null,
+                    paddingRight: rs ? rs.paddingRight : null,
+                    toggleTransform: ts ? ts.transform : null,
+                  };
+                }"""
+            )
+            result["diagnostics"]["object_explorer_rtl"] = object_tree
+            result["checks"]["object_explorer_rtl"] = {
+                "server_group_found": bool(object_tree["found"]),
+                "default_group_localized": object_tree["label"] != "Servers",
+                "row_rtl": object_tree["rowDirection"] == "rtl",
+                "row_right_aligned": object_tree["rowTextAlign"] in ("right", "start"),
+                "left_padding_cleared": object_tree["paddingLeft"] in ("0px", None),
+            }
+
             tech = page.evaluate(
                 """() => {
                   const test=(cls,tag='div',type=null)=>{
@@ -422,6 +452,7 @@ def main():
                 result["checks"]["html_dir_rtl"],
                 result["checks"]["body_direction_rtl"],
                 result["checks"]["hebrew_ui_markers"]["pass"],
+                all(result["checks"]["object_explorer_rtl"].values()),
                 all(result["checks"]["technical_ltr"].values()),
                 result["checks"].get("more_menu_opened", False),
                 result["checks"].get("more_menu_localized", False),
