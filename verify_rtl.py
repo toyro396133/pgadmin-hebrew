@@ -55,8 +55,17 @@ def main() -> None:
     assert 'border-right: 1px solid !important' in patched
     assert 'overflow-x: hidden !important' in patched
     assert 'html[dir="rtl"] .MuiAlert-message' in patched
+    assert 'html[dir="rtl"] .FormFooter-message' in patched
+    assert '.PreferencesComponent-treeContainer .PgTree-tree > div' in patched
+    assert '.PreferencesComponent-treeContainer .PgTree-defaultNode' in patched
+    assert 'input[type="text"]' in patched
     assert "unicode-bidi: plaintext" in patched
     assert "direction: ltr" in patched
+    assert "PGADMIN_HEBREW_RUNTIME_START" in patched
+    assert "replaceMenuOpen" in patched
+    assert "setAutoDirection" in patched
+    assert "[role=\"menuitem\"]" in patched or "[role='menuitem']" in patched
+    assert "פתיחה" in patched
 
     # Jinja syntax must remain valid after the patch.
     Environment().parse(patched)
@@ -67,6 +76,7 @@ def main() -> None:
     patched_crlf, changed_crlf = installer.patch_base(original_crlf)
     assert changed_crlf
     assert "PGADMIN_HEBREW_RTL_START" in patched_crlf
+    assert "PGADMIN_HEBREW_RUNTIME_START" in patched_crlf
     assert "\r\n" in patched_crlf
     Environment().parse(patched_crlf)
 
@@ -75,6 +85,7 @@ def main() -> None:
     assert not changed2
     assert patched2 == patched
     assert patched2.count("PGADMIN_HEBREW_RTL_START") == 1
+    assert patched2.count("PGADMIN_HEBREW_RUNTIME_START") == 1
 
     # Upgrade path: an installed older block must be replaced in-place by the
     # current visual RTL block, and the result must then be idempotent.
@@ -89,6 +100,11 @@ def main() -> None:
     upgraded2, upgraded_changed2 = installer.patch_base(upgraded)
     assert not upgraded_changed2
     assert upgraded2 == patched
+
+    stale_runtime = patched.replace("פתיחה", "OPEN_STALE", 1)
+    runtime_upgraded, runtime_changed = installer.patch_base(stale_runtime)
+    assert runtime_changed
+    assert runtime_upgraded == patched
 
     # Config registration is idempotent too.
     config = "LANGUAGES = {\n    'en': 'English',\n    'sv': 'Swedish'\n}\n"
@@ -116,6 +132,8 @@ def main() -> None:
         ).read_text(encoding="utf-8")
         installed_config = (web / "config.py").read_text(encoding="utf-8")
         assert "PGADMIN_HEBREW_RTL_START" in installed_base
+        assert "PGADMIN_HEBREW_RUNTIME_START" in installed_base
+        assert "replaceMenuOpen" in installed_base
         assert "'he': 'Hebrew'," in installed_config
         assert (
             web
@@ -136,7 +154,7 @@ def main() -> None:
     print(f"Upstream base.html normalized git blob: {actual_sha}")
     print("Jinja parse: OK (LF + CRLF)")
     print("Idempotency: OK")
-    print("Installed RTL block upgrade: OK")
+    print("Installed RTL/runtime upgrade: OK")
     print("Install/restore smoke test: OK")
 
 
