@@ -378,7 +378,7 @@ def main():
 
                       const alertProbe = document.createElement('div');
                       alertProbe.className = 'FormFooter-message';
-                      alertProbe.textContent = 'SSL: CERTIFICATE_VERIFY_FAILED';
+                      alertProbe.textContent = '&lt;urlopen error [SSL: CERTIFICATE_VERIFY_FAILED]&gt;';
                       document.body.appendChild(alertProbe);
 
                       const inputProbe = document.createElement('input');
@@ -407,7 +407,24 @@ def main():
                         helperTextAlign: h ? h.textAlign : null,
                         alertUnicodeBidi: alertStyle.unicodeBidi,
                         alertDirAttribute: alertProbe.getAttribute('dir'),
+                        alertText: alertProbe.textContent,
                         technicalInputDirAttribute: inputProbe.getAttribute('dir'),
+                        overflowingTreeDescendants: tree
+                          ? Array.from(tree.querySelectorAll('*'))
+                            .filter((el) => el.scrollWidth > el.clientWidth + 1)
+                            .slice(0, 25)
+                            .map((el) => {
+                              const cs = getComputedStyle(el);
+                              return {
+                                tag: el.tagName,
+                                className: el.className?.toString?.() || '',
+                                role: el.getAttribute('role'),
+                                clientWidth: el.clientWidth,
+                                scrollWidth: el.scrollWidth,
+                                overflowX: cs.overflowX,
+                              };
+                            })
+                          : [],
                         pageHasHorizontalOverflow:
                           document.documentElement.scrollWidth >
                           document.documentElement.clientWidth + 1,
@@ -427,8 +444,12 @@ def main():
                     "helper_rtl": visual["helperDirection"] in (None, "rtl"),
                     "alerts_plaintext": visual["alertUnicodeBidi"] == "plaintext",
                     "alerts_auto_direction": visual["alertDirAttribute"] == "auto",
+                    "alerts_entities_decoded":
+                        visual["alertText"].startswith("<urlopen error"),
                     "technical_input_auto_direction":
                         visual["technicalInputDirAttribute"] == "auto",
+                    "tree_has_no_horizontal_overflow_descendants":
+                        len(visual["overflowingTreeDescendants"]) == 0,
                     "no_page_horizontal_overflow": not visual["pageHasHorizontalOverflow"],
                 }
 
