@@ -12,11 +12,17 @@
     "body_direction_rtl": true,
     "hebrew_ui_markers": {
       "found": [
+        "לוח מחוונים",
+        "מאפיינים",
+        "סטטיסטיקות",
+        "תלויות",
+        "אובייקטים תלויים",
+        "תהליכים",
         "סייר האובייקטים",
         "ברוכים הבאים"
       ],
-      "required": 3,
-      "pass": false
+      "required": 5,
+      "pass": true
     },
     "technical_ltr": {
       "codemirror": true,
@@ -24,7 +30,7 @@
       "grid": true,
       "numberInput": true
     },
-    "file_menu_hebrew": false,
+    "more_menu_opened": false,
     "preferences_hebrew": false
   },
   "screenshots": [
@@ -32,23 +38,24 @@
     "artifacts\\screenshots\\99-error.png"
   ],
   "errors": [
-    "File menu: Locator.click: Timeout 10000ms exceeded.\nCall log:\n  - waiting for get_by_text(\"קובץ\", exact=True).first\n",
-    "Preferences: Locator.click: Timeout 10000ms exceeded.\nCall log:\n  - waiting for get_by_text(\"קובץ\", exact=True).first\n"
+    "More menu: Could not locate pgAdmin More toolbar button",
+    "Preferences: Locator.click: Timeout 10000ms exceeded.\nCall log:\n  - waiting for get_by_text(\"Preferences\", exact=True).last\n"
   ],
   "diagnostics": {
-    "cdp": "http://127.0.0.1:61521",
+    "cdp": "http://127.0.0.1:51306",
     "observed_urls": [
-      "http://127.0.0.1:61523/browser/"
+      "http://127.0.0.1:51308/browser/"
     ],
     "targets": [
       {
         "context": 0,
         "page": 0,
-        "url": "http://127.0.0.1:61523/browser/",
+        "url": "http://127.0.0.1:51308/browser/",
         "closed": false
       }
     ],
-    "selected_url": "http://127.0.0.1:61523/browser/"
+    "selected_url": "http://127.0.0.1:51308/browser/",
+    "failure_body_excerpt": "סייר האובייקטים\nServers\nלוח מחוונים\nמאפיינים\nSQL\nסטטיסטיקות\nתלויות\nאובייקטים תלויים\nתהליכים\nברוכים הבאים\nעשיר בתכונות | ממצה את יכולות PostgreSQL | קוד פתוח\n\npgAdmin הוא כלי קוד פתוח לניהול PostgreSQL. הוא כולל ממשק ניהול גרפי, כלי שאילתות SQL, מנפה שגיאות לקוד פרוצדורלי ועוד. הכלי מיועד לצורכי מפתחים, מנהלי מסדי נתונים ומנהלי מערכות.\n\nקישורים מהירים\nהוספת שרת חדש\nהגדרת pgAdmin\nתחילת העבודה\nתיעוד PostgreSQL\nאתר pgAdmin\nPlanet PostgreSQL\nתמיכת הקהילה"
   },
-  "timestamp": "2026-10-06T01:50:11+0300"
+  "timestamp": "2026-10-06T01:55:10+0300"
 }
