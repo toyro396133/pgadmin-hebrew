@@ -238,6 +238,10 @@ def main():
                 # pgAdmin 9.18 desktop collapses panel actions into the
                 # MoreVert toolbar button at narrower window widths.
                 candidates = [
+                    page.locator('button[data-label="עוד"]'),
+                    page.locator('button[data-label="More"]'),
+                    page.locator('button[aria-label="עוד"]'),
+                    page.locator('button[aria-label="More"]'),
                     page.locator('button[title="עוד"]'),
                     page.locator('button[title="More"]'),
                 ]
@@ -268,24 +272,42 @@ def main():
                 result["checks"]["more_menu_opened"] = False
                 result["errors"].append(f"More menu: {exc}")
 
+            # Close the More menu after its dedicated screenshot.
             try:
-                # MainMoreToolbar.jsx defines a non-translated parent item
-                # labelled "Open", whose submenu contains closed panels.
-                pref = page.get_by_text("העדפות", exact=True)
-                if pref.count() == 0 or not pref.last.is_visible():
-                    open_item = page.get_by_text("Open", exact=True)
-                    if open_item.count() > 0:
-                        open_item.last.hover(timeout=10000)
-                        page.wait_for_timeout(500)
-                        pref_after_hover = page.get_by_text("העדפות", exact=True)
-                        if pref_after_hover.count() == 0 or not pref_after_hover.last.is_visible():
-                            open_item.last.click(timeout=10000)
-                            page.wait_for_timeout(500)
+                page.keyboard.press("Escape")
+            except PlaywrightError:
+                pass
 
-                pref = page.get_by_text("העדפות", exact=True)
-                if pref.count() == 0:
-                    pref = page.get_by_text("Preferences", exact=True)
-                pref.last.click(timeout=10000)
+            # Open Preferences through the stable Quick Links control.
+            # WelcomeDashboard.jsx gives the Configure pgAdmin icon the
+            # permanent id "mnu_preferences" and calls pgAdmin.Preferences.show().
+            try:
+                pref_icon = page.locator("#mnu_preferences")
+                if pref_icon.count() > 0:
+                    pref_icon.first.locator("xpath=ancestor::*[self::a or self::button][1]").click(
+                        timeout=10000
+                    )
+                    result["diagnostics"]["preferences_open_method"] = "quick-link"
+                else:
+                    quick_link = page.get_by_text("הגדרת pgAdmin", exact=True)
+                    if quick_link.count() > 0:
+                        quick_link.first.click(timeout=10000)
+                        result["diagnostics"]["preferences_open_method"] = "quick-link-text"
+                    else:
+                        # Last-resort runtime call uses the same callback as
+                        # the official Quick Links control.
+                        opened = page.evaluate(
+                            """() => {
+                              if (window.pgAdmin?.Preferences?.show) {
+                                window.pgAdmin.Preferences.show();
+                                return true;
+                              }
+                              return false;
+                            }"""
+                        )
+                        if not opened:
+                            raise RuntimeError("Could not locate or invoke pgAdmin Preferences")
+                        result["diagnostics"]["preferences_open_method"] = "pgAdmin.Preferences.show"
 
                 page.wait_for_timeout(2000)
                 pref_text = page.locator("body").inner_text(timeout=10000)
