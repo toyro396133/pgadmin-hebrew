@@ -1,5 +1,5 @@
 {
-  "status": "passed",
+  "status": "failed",
   "checks": {
     "language_preference_api": {
       "ok": true,
@@ -49,7 +49,9 @@
       "helper_rtl": true,
       "alerts_plaintext": true,
       "alerts_auto_direction": true,
+      "alerts_entities_decoded": true,
       "technical_input_auto_direction": true,
+      "tree_has_no_horizontal_overflow_descendants": false,
       "no_page_horizontal_overflow": true
     }
   },
@@ -60,19 +62,19 @@
   ],
   "errors": [],
   "diagnostics": {
-    "cdp": "http://127.0.0.1:56455",
+    "cdp": "http://127.0.0.1:57566",
     "observed_urls": [
-      "http://127.0.0.1:56457/browser/"
+      "http://127.0.0.1:57568/browser/"
     ],
     "targets": [
       {
         "context": 0,
         "page": 0,
-        "url": "http://127.0.0.1:56457/browser/",
+        "url": "http://127.0.0.1:57568/browser/",
         "closed": false
       }
     ],
-    "selected_url": "http://127.0.0.1:56457/browser/",
+    "selected_url": "http://127.0.0.1:57568/browser/",
     "object_explorer_rtl": {
       "found": true,
       "label": "שרתים",
@@ -106,9 +108,20 @@
       "helperTextAlign": "right",
       "alertUnicodeBidi": "plaintext",
       "alertDirAttribute": "auto",
+      "alertText": "<urlopen error [SSL: CERTIFICATE_VERIFY_FAILED]>",
       "technicalInputDirAttribute": "auto",
+      "overflowingTreeDescendants": [
+        {
+          "tag": "DIV",
+          "className": "",
+          "role": null,
+          "clientWidth": 156,
+          "scrollWidth": 184,
+          "overflowX": "hidden"
+        }
+      ],
       "pageHasHorizontalOverflow": false
     }
   },
-  "timestamp": "2026-10-06T02:19:15+0300"
+  "timestamp": "2026-10-06T02:23:35+0300"
 }
