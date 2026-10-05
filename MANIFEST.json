@@ -22,8 +22,7 @@
     "reproducible_catalog_build": true,
     "rtl_jinja_parse": true,
     "rtl_patch_idempotent": true,
-    "installer_restore_smoke_test": true,
-    "e2e_runner_static_validated": true
+    "installer_restore_smoke_test": true
   },
   "rtl": {
     "baseline_enabled": true,
@@ -37,7 +36,7 @@
     ],
     "requires_frontend_rebuild": false,
     "full_mui_style_mirroring": false,
-    "runtime_visual_qa": "pending local Windows run"
+    "runtime_visual_qa": "pending"
   },
   "files": {
     "translations.json": {
@@ -81,8 +80,8 @@
       "size_bytes": 2182
     },
     "install_hebrew.py": {
-      "sha256": "e6a2bbe737c764f26c2b08ea9ee6e136fe2bb077341b217d15942fe474cc58a5",
-      "size_bytes": 11684
+      "sha256": "7d8aee894005a9dac1e4ccc5be7d8f75a70ca3a85f629ab27831256b9fbda696",
+      "size_bytes": 11551
     },
     "install-hebrew.ps1": {
       "sha256": "15e95853f374c83cdb921b1821960ce9cc6f92fc4e95438d1e1423e796413936",
@@ -123,14 +122,6 @@
     "tests/base.html.REL-9_18": {
       "sha256": "17d9c8a0f52660dfbc71a0c737c97bb8ce1c977e717f3ca0291d6a199cc5b79b",
       "size_bytes": 5622
-    },
-    "setup-and-test.ps1": {
-      "sha256": "b22e36c296dc24f8184c0ac4114585ffe9ac761917e9fd4b1b5bee5ead257094",
-      "size_bytes": 5826
-    },
-    "tests/e2e_pgadmin.py": {
-      "sha256": "7ba16eade3a3e83723a819fd6a630edd4c60cf150e40427922ff000627327988",
-      "size_bytes": 8915
     }
   }
 }
