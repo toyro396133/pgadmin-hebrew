@@ -422,6 +422,8 @@ def main():
                                 clientWidth: el.clientWidth,
                                 scrollWidth: el.scrollWidth,
                                 overflowX: cs.overflowX,
+                                horizontallyScrollable:
+                                  ['auto', 'scroll'].includes(cs.overflowX),
                               };
                             })
                           : [],
@@ -448,8 +450,11 @@ def main():
                         visual["alertText"].startswith("<urlopen error"),
                     "technical_input_auto_direction":
                         visual["technicalInputDirAttribute"] == "auto",
-                    "tree_has_no_horizontal_overflow_descendants":
-                        len(visual["overflowingTreeDescendants"]) == 0,
+                    "tree_has_no_visible_horizontal_scroll":
+                        not any(
+                            x.get("horizontallyScrollable", False)
+                            for x in visual["overflowingTreeDescendants"]
+                        ),
                     "no_page_horizontal_overflow": not visual["pageHasHorizontalOverflow"],
                 }
 
