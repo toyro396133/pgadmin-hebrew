@@ -1,0 +1,10 @@
+--- a/web/config.py
++++ b/web/config.py
+@@ -4,6 +4,7 @@
+ # Languages we support in the UI
+ LANGUAGES = {
+     'en': 'English',
++    'he': 'Hebrew',
+     'zh_Hans_CN': 'Chinese (Simplified)',
+     'zh_Hant_TW': 'Chinese (Traditional)',
+     'cs': 'Czech',

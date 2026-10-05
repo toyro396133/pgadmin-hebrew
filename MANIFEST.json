@@ -1,0 +1,127 @@
+{
+  "project": "pgAdmin 4 Hebrew localization",
+  "pgadmin_version": "9.18",
+  "upstream_ref": "REL-9_18",
+  "upstream_messages_pot_blob_sha": "3b48f12d1069a762de5abde8c60ee909b7e4ab87",
+  "upstream_base_html_blob_sha": "aa433ffb45a06e115722bb4a34590ad9f6a3d6ba",
+  "upstream_config_py_blob_sha": "f5c07d3c3ca3f00ee54735a7957689a10b30d457",
+  "upstream_message_count": 3684,
+  "translated_message_count": 3684,
+  "catalog_coverage_percent": 100.0,
+  "keyset_fingerprint": {
+    "algorithm": "FNV-1a-64 aggregate (count/sum/xor/sum2)",
+    "count": 3684,
+    "sum": "0x4f68eb208d9ea6a7",
+    "xor": "0xcd354e21ee24a093",
+    "sum2": "0x6fdf40ef9dfa1f15"
+  },
+  "qa": {
+    "untranslated": 0,
+    "placeholder_markup_mismatches": 0,
+    "hidden_bidi_format_controls": 0,
+    "reproducible_catalog_build": true,
+    "rtl_jinja_parse": true,
+    "rtl_patch_idempotent": true,
+    "installer_restore_smoke_test": true
+  },
+  "rtl": {
+    "baseline_enabled": true,
+    "semantic_html_dir": true,
+    "technical_ltr_islands": [
+      "CodeMirror",
+      "xterm",
+      "pre/code/kbd/samp",
+      "technical input types",
+      "React Data Grid"
+    ],
+    "requires_frontend_rebuild": false,
+    "full_mui_style_mirroring": false,
+    "runtime_visual_qa": "pending"
+  },
+  "files": {
+    "translations.json": {
+      "sha256": "6f079a0f03c8355ce4d8fff4ca65360aff4627697f9d846ec86596d74cc14ddf",
+      "size_bytes": 312647
+    },
+    "messages.po": {
+      "sha256": "779c454cb1f28fb6c9793557a1d1372a282b526c415314e444af4f798ac1caf5",
+      "size_bytes": 358952
+    },
+    "messages.mo": {
+      "sha256": "2ed5b7f014064709c03ac49dd7d8665ef040a80ed396097bcf3c0ed2ae87da22",
+      "size_bytes": 341831
+    },
+    "README.md": {
+      "sha256": "76d1a6b9f6b6a1045ab1bd114057c16aea6552222bddde347d40d86fd35d94e7",
+      "size_bytes": 4181
+    },
+    "STATUS.md": {
+      "sha256": "0a8a2b40c758485b83b6585fb3475c28d57893e4085ade9a7b2b5ca1326fbb1d",
+      "size_bytes": 3004
+    },
+    "RTL.md": {
+      "sha256": "a6e140025c8bbad9dcf95a7d1354d012b3a139c9e2d7a78455902dffb8e66c07",
+      "size_bytes": 2746
+    },
+    "INSTALL-WINDOWS.md": {
+      "sha256": "b167aafa4e12dcc22f91facde2ce5633cc2e32df2030495858f3e2af0652708c",
+      "size_bytes": 3018
+    },
+    "config-he.patch": {
+      "sha256": "c5937fd6a7f78a2bf253e90d974968822acfc1b415fc1e4f95dc4d16315bfa00",
+      "size_bytes": 255
+    },
+    "rtl-he.patch": {
+      "sha256": "795f1e88b81d7baf4a636b604b233f470336ecf76260dbb931661606db1f8d14",
+      "size_bytes": 1926
+    },
+    "pgadmin-hebrew-v9.18.patch": {
+      "sha256": "791393d253de025491201e6c81ef4316f9cfafc3807117f81fbe92f315885280",
+      "size_bytes": 2182
+    },
+    "install_hebrew.py": {
+      "sha256": "7d8aee894005a9dac1e4ccc5be7d8f75a70ca3a85f629ab27831256b9fbda696",
+      "size_bytes": 11551
+    },
+    "install-hebrew.ps1": {
+      "sha256": "15e95853f374c83cdb921b1821960ce9cc6f92fc4e95438d1e1423e796413936",
+      "size_bytes": 489
+    },
+    "verify_keyset.py": {
+      "sha256": "3e009504102791c5fcd646901ca9895eeb189d03a6d86fccb416853194e845cd",
+      "size_bytes": 1300
+    },
+    "verify_upstream.py": {
+      "sha256": "867f02d0e91abceaafa85093b349ccad7073a08f870692fdebddc44330315bc8",
+      "size_bytes": 2815
+    },
+    "verify_rtl.py": {
+      "sha256": "67a49be1157d90adcac22edacb65ed2dccf0aa077ebf9bf2bea2263e3882f110",
+      "size_bytes": 3502
+    },
+    "qa_translation.py": {
+      "sha256": "81a1fac4d118a3650846f18df0111058e18deac6f55feb3ced0d805ca2e00776",
+      "size_bytes": 2113
+    },
+    "fetch-and-build.ps1": {
+      "sha256": "6e63e4a73d58f671b6ac75d7bf2c0282bfc170ea00410c3ba87b78219e4ca054",
+      "size_bytes": 1245
+    },
+    "build_catalog.py": {
+      "sha256": "c9a1a6baac596bf3e4ace0c46eb086a67546311dbb360c4d8802e9e4a77b3e8a",
+      "size_bytes": 2965
+    },
+    "merge_into_template.py": {
+      "sha256": "c7bd91ce54f949729ac735792d0906ff43ff7a45b831ef3ebb42436ade8ab85b",
+      "size_bytes": 1672
+    },
+    "glossary.md": {
+      "sha256": "b41eba12220aac2c67d826aec6961cf112008159084198f3bfa89d407834e49d",
+      "size_bytes": 3440
+    },
+    "tests/base.html.REL-9_18": {
+      "sha256": "17d9c8a0f52660dfbc71a0c737c97bb8ce1c977e717f3ca0291d6a199cc5b79b",
+      "size_bytes": 5622
+    }
+  }
+}

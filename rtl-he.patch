@@ -1,0 +1,59 @@
+--- a/web/pgadmin/templates/base.html
++++ b/web/pgadmin/templates/base.html
+@@ -1,5 +1,6 @@
+ <!DOCTYPE html>
+-<html lang="{{ request.cookies.get('PGADMIN_LANGUAGE') or 'en' }}">
++{% set pgadmin_language = request.cookies.get('PGADMIN_LANGUAGE') or 'en' %}
++<html lang="{{ pgadmin_language }}" dir="{{ 'rtl' if pgadmin_language == 'he' else 'ltr' }}">
+ <head>
+     <meta charset="utf-8">
+     <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+@@ -35,6 +36,48 @@
+           text-align: center;
+           color: #fff;
+         }
++
++        /* PGADMIN_HEBREW_RTL_START
++         * Hebrew is right-to-left, but pgAdmin contains technical surfaces
++         * where SQL, terminal output and machine-readable values must remain LTR.
++         */
++        html[dir="rtl"] body {
++          direction: rtl;
++          text-align: start;
++        }
++
++        html[dir="rtl"] .cm-editor,
++        html[dir="rtl"] .cm-editor .cm-scroller,
++        html[dir="rtl"] .cm-editor .cm-content,
++        html[dir="rtl"] .xterm,
++        html[dir="rtl"] .xterm-screen,
++        html[dir="rtl"] .xterm-rows,
++        html[dir="rtl"] pre,
++        html[dir="rtl"] code,
++        html[dir="rtl"] kbd,
++        html[dir="rtl"] samp {
++          direction: ltr;
++          text-align: left;
++          unicode-bidi: isolate;
++        }
++
++        html[dir="rtl"] input[type="number"],
++        html[dir="rtl"] input[type="password"],
++        html[dir="rtl"] input[type="email"],
++        html[dir="rtl"] input[type="url"] {
++          direction: ltr;
++          text-align: left;
++        }
++
++        /* Preserve SQL/data-grid column order. */
++        html[dir="rtl"] .rdg {
++          direction: ltr;
++        }
++        html[dir="rtl"] .rdg-cell,
++        html[dir="rtl"] .rdg-header-row {
++          unicode-bidi: plaintext;
++        }
++        /* PGADMIN_HEBREW_RTL_END */
+     </style>
+ 
+     <!-- Base template stylesheets -->
