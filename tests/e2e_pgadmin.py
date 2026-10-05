@@ -268,6 +268,14 @@ def main():
                 # Capture visible menu text for remote diagnosis.
                 menu_texts = page.locator('[role="menu"], [role="menuitem"]').all_inner_texts()
                 result["diagnostics"]["more_menu_texts"] = menu_texts
+                menu_items = [
+                    t.strip()
+                    for t in page.locator('[role="menuitem"]').all_inner_texts()
+                    if t.strip()
+                ]
+                result["checks"]["more_menu_localized"] = (
+                    "פתיחה" in menu_items and "Open" not in menu_items
+                )
             except Exception as exc:
                 result["checks"]["more_menu_opened"] = False
                 result["errors"].append(f"More menu: {exc}")
@@ -317,37 +325,65 @@ def main():
                 )
 
                 visual = page.evaluate(
-                    """() => {
+                    """async () => {
                       const pref = document.querySelector(
                         '.PreferencesComponent-preferencesContainer'
                       );
                       const tree = document.querySelector(
                         '.PreferencesComponent-treeContainer'
                       );
+                      const treeScroller =
+                        document.querySelector(
+                          '.PreferencesComponent-treeContainer .PgTree-tree [role="tree"]'
+                        ) ||
+                        document.querySelector(
+                          '.PreferencesComponent-treeContainer .PgTree-tree > div'
+                        );
+                      const treeNode = document.querySelector(
+                        '.PreferencesComponent-treeContainer .PgTree-defaultNode'
+                      );
                       const helper = document.querySelector(
                         '.PreferencesComponent-preferencesContainer .MuiFormHelperText-root'
                       );
+
                       const alertProbe = document.createElement('div');
-                      alertProbe.setAttribute('role', 'alert');
+                      alertProbe.className = 'FormFooter-message';
                       alertProbe.textContent = 'SSL: CERTIFICATE_VERIFY_FAILED';
                       document.body.appendChild(alertProbe);
-                      const alertStyle = getComputedStyle(alertProbe);
+
+                      const inputProbe = document.createElement('input');
+                      inputProbe.type = 'text';
+                      inputProbe.value = '~/.anthropic-api-key';
+                      pref?.appendChild(inputProbe);
+
+                      await new Promise((resolve) => requestAnimationFrame(() =>
+                        requestAnimationFrame(resolve)
+                      ));
 
                       const p = pref ? getComputedStyle(pref) : null;
                       const t = tree ? getComputedStyle(tree) : null;
+                      const ts = treeScroller ? getComputedStyle(treeScroller) : null;
+                      const tn = treeNode ? getComputedStyle(treeNode) : null;
                       const h = helper ? getComputedStyle(helper) : null;
+                      const alertStyle = getComputedStyle(alertProbe);
+
                       const data = {
                         borderRightWidth: p ? p.borderRightWidth : null,
                         borderLeftWidth: p ? p.borderLeftWidth : null,
                         treeOverflowX: t ? t.overflowX : null,
+                        treeInnerOverflowX: ts ? ts.overflowX : null,
+                        treeNodeDirection: tn ? tn.direction : null,
                         helperDirection: h ? h.direction : null,
                         helperTextAlign: h ? h.textAlign : null,
                         alertUnicodeBidi: alertStyle.unicodeBidi,
+                        alertDirAttribute: alertProbe.getAttribute('dir'),
+                        technicalInputDirAttribute: inputProbe.getAttribute('dir'),
                         pageHasHorizontalOverflow:
                           document.documentElement.scrollWidth >
                           document.documentElement.clientWidth + 1,
                       };
                       alertProbe.remove();
+                      inputProbe.remove();
                       return data;
                     }"""
                 )
@@ -356,8 +392,13 @@ def main():
                     "divider_on_right": visual["borderRightWidth"] not in (None, "0px"),
                     "no_left_divider": visual["borderLeftWidth"] in (None, "0px"),
                     "tree_x_clipped": visual["treeOverflowX"] == "hidden",
+                    "tree_inner_x_clipped": visual["treeInnerOverflowX"] == "hidden",
+                    "tree_nodes_rtl": visual["treeNodeDirection"] == "rtl",
                     "helper_rtl": visual["helperDirection"] in (None, "rtl"),
                     "alerts_plaintext": visual["alertUnicodeBidi"] == "plaintext",
+                    "alerts_auto_direction": visual["alertDirAttribute"] == "auto",
+                    "technical_input_auto_direction":
+                        visual["technicalInputDirAttribute"] == "auto",
                     "no_page_horizontal_overflow": not visual["pageHasHorizontalOverflow"],
                 }
 
@@ -383,6 +424,7 @@ def main():
                 result["checks"]["hebrew_ui_markers"]["pass"],
                 all(result["checks"]["technical_ltr"].values()),
                 result["checks"].get("more_menu_opened", False),
+                result["checks"].get("more_menu_localized", False),
                 result["checks"].get("preferences_hebrew", False),
                 all(
                     result["checks"].get("preferences_visual_rtl", {}).values()
