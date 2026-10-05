@@ -2,32 +2,37 @@ name: Bootstrap repository
 
 on:
   push:
-    branches: [main]
+    branches:
+      - main
     paths:
-      - '.bootstrap/pgadmin-hebrew-bootstrap.zip'
-      - '.github/workflows/bootstrap.yml'
-  workflow_dispatch:
+      - ".bootstrap/**"
+      - ".github/workflows/bootstrap.yml"
 
 permissions:
   contents: write
 
 jobs:
-  unpack:
+  import:
+    if: ${{ hashFiles('.bootstrap/pgadmin-hebrew-bootstrap.tar.xz') != '' }}
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - name: Unpack repository payload
+      - name: Check out repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Extract project files
         shell: bash
         run: |
           set -euo pipefail
-          PAYLOAD=".bootstrap/pgadmin-hebrew-bootstrap.zip"
-          if [[ ! -f "$PAYLOAD" ]]; then
-            echo "Bootstrap payload already removed; nothing to do."
-            exit 0
-          fi
-          unzip -oq "$PAYLOAD" -d .
+          rm -rf .bootstrap/work
+          mkdir -p .bootstrap/work
+          tar -xJf .bootstrap/pgadmin-hebrew-bootstrap.tar.xz -C .bootstrap/work
+          shopt -s dotglob nullglob
+          cp -a .bootstrap/work/pgadmin-hebrew-bootstrap/. .
           rm -rf .bootstrap
-      - name: Commit extracted project
+
+      - name: Commit imported project
         shell: bash
         run: |
           set -euo pipefail
@@ -38,5 +43,5 @@ jobs:
             echo "Nothing to commit."
             exit 0
           fi
-          git commit -m "chore: import complete pgAdmin Hebrew project"
+          git commit -m "chore: import complete pgAdmin Hebrew package"
           git push origin HEAD:main
