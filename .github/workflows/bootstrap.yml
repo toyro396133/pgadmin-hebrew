@@ -1,0 +1,42 @@
+name: Bootstrap repository
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.bootstrap/pgadmin-hebrew-bootstrap.zip'
+      - '.github/workflows/bootstrap.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  unpack:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Unpack repository payload
+        shell: bash
+        run: |
+          set -euo pipefail
+          PAYLOAD=".bootstrap/pgadmin-hebrew-bootstrap.zip"
+          if [[ ! -f "$PAYLOAD" ]]; then
+            echo "Bootstrap payload already removed; nothing to do."
+            exit 0
+          fi
+          unzip -oq "$PAYLOAD" -d .
+          rm -rf .bootstrap
+      - name: Commit extracted project
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          if git diff --cached --quiet; then
+            echo "Nothing to commit."
+            exit 0
+          fi
+          git commit -m "chore: import complete pgAdmin Hebrew project"
+          git push origin HEAD:main
