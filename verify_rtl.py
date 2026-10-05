@@ -67,6 +67,11 @@ def main() -> None:
     assert 'input[type="text"]' in patched
     assert "unicode-bidi: plaintext" in patched
     assert "direction: ltr" in patched
+    assert 'input[name="host"]' in patched
+    assert 'input[name="db"]' in patched
+    assert 'input[name="username"]' in patched
+    assert 'input[name="file"]' in patched
+    assert 'textarea[name="connection_string"]' in patched
     assert "PGADMIN_HEBREW_RUNTIME_START" in patched
     assert "replaceMenuOpen" in patched
     assert "decodeTechnicalMessageEntities" in patched
