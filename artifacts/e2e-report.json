@@ -1,5 +1,5 @@
 {
-  "status": "failed",
+  "status": "passed",
   "checks": {
     "language_preference_api": {
       "ok": true,
@@ -51,7 +51,7 @@
       "alerts_auto_direction": true,
       "alerts_entities_decoded": true,
       "technical_input_auto_direction": true,
-      "tree_has_no_horizontal_overflow_descendants": false,
+      "tree_has_no_visible_horizontal_scroll": true,
       "no_page_horizontal_overflow": true
     }
   },
@@ -62,19 +62,19 @@
   ],
   "errors": [],
   "diagnostics": {
-    "cdp": "http://127.0.0.1:57566",
+    "cdp": "http://127.0.0.1:65014",
     "observed_urls": [
-      "http://127.0.0.1:57568/browser/"
+      "http://127.0.0.1:65016/browser/"
     ],
     "targets": [
       {
         "context": 0,
         "page": 0,
-        "url": "http://127.0.0.1:57568/browser/",
+        "url": "http://127.0.0.1:65016/browser/",
         "closed": false
       }
     ],
-    "selected_url": "http://127.0.0.1:57568/browser/",
+    "selected_url": "http://127.0.0.1:65016/browser/",
     "object_explorer_rtl": {
       "found": true,
       "label": "שרתים",
@@ -117,11 +117,12 @@
           "role": null,
           "clientWidth": 156,
           "scrollWidth": 184,
-          "overflowX": "hidden"
+          "overflowX": "hidden",
+          "horizontallyScrollable": false
         }
       ],
       "pageHasHorizontalOverflow": false
     }
   },
-  "timestamp": "2026-10-06T02:23:35+0300"
+  "timestamp": "2026-10-06T02:30:05+0300"
 }
