@@ -13,7 +13,6 @@ permissions:
 
 jobs:
   import:
-    if: ${{ hashFiles('.bootstrap/pgadmin-hebrew-bootstrap.tar.xz') != '' }}
     runs-on: ubuntu-latest
     steps:
       - name: Check out repository
@@ -21,7 +20,19 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Detect bootstrap archive
+        id: bootstrap
+        shell: bash
+        run: |
+          if [[ -f .bootstrap/pgadmin-hebrew-bootstrap.tar.xz ]]; then
+            echo "present=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "present=false" >> "$GITHUB_OUTPUT"
+            echo "Bootstrap archive is no longer present; nothing to import."
+          fi
+
       - name: Extract project files
+        if: steps.bootstrap.outputs.present == 'true'
         shell: bash
         run: |
           set -euo pipefail
@@ -33,6 +44,7 @@ jobs:
           rm -rf .bootstrap
 
       - name: Commit imported project
+        if: steps.bootstrap.outputs.present == 'true'
         shell: bash
         run: |
           set -euo pipefail
