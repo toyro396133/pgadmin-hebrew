@@ -315,6 +315,52 @@ def main():
                     "העדפות" in pref_text
                     and ("ממשק משתמש" in pref_text or "שפה" in pref_text)
                 )
+
+                visual = page.evaluate(
+                    """() => {
+                      const pref = document.querySelector(
+                        '.PreferencesComponent-preferencesContainer'
+                      );
+                      const tree = document.querySelector(
+                        '.PreferencesComponent-treeContainer'
+                      );
+                      const helper = document.querySelector(
+                        '.PreferencesComponent-preferencesContainer .MuiFormHelperText-root'
+                      );
+                      const alertProbe = document.createElement('div');
+                      alertProbe.setAttribute('role', 'alert');
+                      alertProbe.textContent = 'SSL: CERTIFICATE_VERIFY_FAILED';
+                      document.body.appendChild(alertProbe);
+                      const alertStyle = getComputedStyle(alertProbe);
+
+                      const p = pref ? getComputedStyle(pref) : null;
+                      const t = tree ? getComputedStyle(tree) : null;
+                      const h = helper ? getComputedStyle(helper) : null;
+                      const data = {
+                        borderRightWidth: p ? p.borderRightWidth : null,
+                        borderLeftWidth: p ? p.borderLeftWidth : null,
+                        treeOverflowX: t ? t.overflowX : null,
+                        helperDirection: h ? h.direction : null,
+                        helperTextAlign: h ? h.textAlign : null,
+                        alertUnicodeBidi: alertStyle.unicodeBidi,
+                        pageHasHorizontalOverflow:
+                          document.documentElement.scrollWidth >
+                          document.documentElement.clientWidth + 1,
+                      };
+                      alertProbe.remove();
+                      return data;
+                    }"""
+                )
+                result["diagnostics"]["preferences_visual"] = visual
+                result["checks"]["preferences_visual_rtl"] = {
+                    "divider_on_right": visual["borderRightWidth"] not in (None, "0px"),
+                    "no_left_divider": visual["borderLeftWidth"] in (None, "0px"),
+                    "tree_x_clipped": visual["treeOverflowX"] == "hidden",
+                    "helper_rtl": visual["helperDirection"] in (None, "rtl"),
+                    "alerts_plaintext": visual["alertUnicodeBidi"] == "plaintext",
+                    "no_page_horizontal_overflow": not visual["pageHasHorizontalOverflow"],
+                }
+
                 pref_shot = shots / "02-preferences.png"
                 page.screenshot(path=str(pref_shot), full_page=True)
                 result["screenshots"].append(str(pref_shot))
@@ -338,6 +384,9 @@ def main():
                 all(result["checks"]["technical_ltr"].values()),
                 result["checks"].get("more_menu_opened", False),
                 result["checks"].get("preferences_hebrew", False),
+                all(
+                    result["checks"].get("preferences_visual_rtl", {}).values()
+                ),
             ]
             result["status"] = "passed" if all(required) else "failed"
             browser.close()
