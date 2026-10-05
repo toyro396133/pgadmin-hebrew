@@ -17,6 +17,14 @@ def git_blob_sha(data: bytes) -> str:
     return hashlib.sha1(b"blob " + str(len(data)).encode() + b"\0" + data).hexdigest()
 
 
+def normalized_git_blob_sha(data: bytes) -> str:
+    """Match Git's canonical LF checkout content even on Windows CRLF checkouts."""
+    if data.startswith(b"\xef\xbb\xbf"):
+        data = data[3:]
+    data = data.replace(b"\r\n", b"\n")
+    return git_blob_sha(data)
+
+
 def load_installer():
     spec = importlib.util.spec_from_file_location("install_hebrew", ROOT / "install_hebrew.py")
     mod = importlib.util.module_from_spec(spec)
@@ -29,10 +37,13 @@ def main() -> None:
     installer = load_installer()
     fixture = ROOT / "tests" / "base.html.REL-9_18"
     raw = fixture.read_bytes()
-    actual_sha = git_blob_sha(raw)
-    assert actual_sha == EXPECTED_UPSTREAM_BASE_GIT_SHA, (actual_sha, EXPECTED_UPSTREAM_BASE_GIT_SHA)
+    actual_sha = normalized_git_blob_sha(raw)
+    assert actual_sha == EXPECTED_UPSTREAM_BASE_GIT_SHA, (
+        actual_sha,
+        EXPECTED_UPSTREAM_BASE_GIT_SHA,
+    )
 
-    original = raw.decode("utf-8")
+    original = raw.decode("utf-8-sig").replace("\r\n", "\n")
     patched, changed = installer.patch_base(original)
     assert changed
     assert "PGADMIN_HEBREW_RTL_START" in patched
@@ -64,22 +75,37 @@ def main() -> None:
         (web / "pgadmin" / "templates").mkdir(parents=True)
         (web / "pgadmin" / "translations").mkdir(parents=True)
         (web / "config.py").write_text(config, encoding="utf-8")
-        (web / "version.py").write_text("APP_RELEASE = 9\nAPP_REVISION = 18\n", encoding="utf-8")
-        (web / "pgadmin" / "templates" / "base.html").write_text(original, encoding="utf-8")
+        (web / "version.py").write_text(
+            "APP_RELEASE = 9\nAPP_REVISION = 18\n", encoding="utf-8"
+        )
+        (web / "pgadmin" / "templates" / "base.html").write_text(
+            original, encoding="utf-8"
+        )
 
         installer.install(web, no_rtl=False, force=False)
-        installed_base = (web / "pgadmin" / "templates" / "base.html").read_text(encoding="utf-8")
+        installed_base = (
+            web / "pgadmin" / "templates" / "base.html"
+        ).read_text(encoding="utf-8")
         installed_config = (web / "config.py").read_text(encoding="utf-8")
         assert "PGADMIN_HEBREW_RTL_START" in installed_base
         assert "'he': 'Hebrew'," in installed_config
-        assert (web / "pgadmin" / "translations" / "he" / "LC_MESSAGES" / "messages.mo").is_file()
+        assert (
+            web
+            / "pgadmin"
+            / "translations"
+            / "he"
+            / "LC_MESSAGES"
+            / "messages.mo"
+        ).is_file()
 
         installer.restore(web)
         assert (web / "config.py").read_text(encoding="utf-8") == config
-        assert (web / "pgadmin" / "templates" / "base.html").read_text(encoding="utf-8") == original
+        assert (
+            web / "pgadmin" / "templates" / "base.html"
+        ).read_text(encoding="utf-8") == original
 
     print("RTL QA: OK")
-    print(f"Upstream base.html git blob: {actual_sha}")
+    print(f"Upstream base.html normalized git blob: {actual_sha}")
     print("Jinja parse: OK")
     print("Idempotency: OK")
     print("Install/restore smoke test: OK")
