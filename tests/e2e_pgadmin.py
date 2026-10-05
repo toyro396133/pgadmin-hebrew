@@ -8,9 +8,87 @@ import time
 from pathlib import Path
 from urllib.parse import urlsplit
 
+from playwright.sync_api import Error as PlaywrightError
+from playwright.sync_api import TimeoutError as PlaywrightTimeoutError
 from playwright.sync_api import sync_playwright
 
 EXPECTED_HE = ["קובץ", "כלים", "עזרה", "סייר האובייקטים", "ברוכים הבאים"]
+
+
+def is_pgadmin_http_url(url: str) -> bool:
+    return url.startswith("http://127.0.0.1:") or url.startswith("http://localhost:")
+
+
+def page_snapshot(browser) -> list[dict]:
+    snapshot = []
+    for ci, context in enumerate(browser.contexts):
+        for pi, page in enumerate(context.pages):
+            try:
+                snapshot.append(
+                    {
+                        "context": ci,
+                        "page": pi,
+                        "url": page.url,
+                        "closed": page.is_closed(),
+                    }
+                )
+            except PlaywrightError as exc:
+                snapshot.append(
+                    {
+                        "context": ci,
+                        "page": pi,
+                        "url": "<unavailable>",
+                        "closed": True,
+                        "error": str(exc),
+                    }
+                )
+    return snapshot
+
+
+def wait_for_stable_pgadmin_page(browser, timeout_ms: int = 90000):
+    """Ignore Electron splash targets and wait for the real pgAdmin web target."""
+    deadline = time.monotonic() + timeout_ms / 1000
+    observed: set[str] = set()
+    last_snapshot: list[dict] = []
+
+    while time.monotonic() < deadline:
+        last_snapshot = page_snapshot(browser)
+
+        for item in last_snapshot:
+            url = item.get("url") or ""
+            if url:
+                observed.add(url)
+
+        pages = [
+            page
+            for context in browser.contexts
+            for page in context.pages
+            if not page.is_closed() and is_pgadmin_http_url(page.url or "")
+        ]
+
+        for page in pages:
+            try:
+                # The real window can navigate once during initial key authentication.
+                page.wait_for_selector("body", timeout=1500)
+                page.wait_for_function(
+                    "() => window.pgAdmin && "
+                    "window.pgAdmin.csrf_token && "
+                    "window.pgAdmin.csrf_token_header",
+                    timeout=2000,
+                )
+                # One final round-trip proves the target survived startup replacement.
+                page.evaluate("() => ({href: location.href, ready: document.readyState})")
+                return page, sorted(observed), last_snapshot
+            except (PlaywrightTimeoutError, PlaywrightError):
+                # splash/main target churn is expected during Electron startup
+                continue
+
+        time.sleep(0.25)
+
+    raise RuntimeError(
+        "Timed out waiting for stable pgAdmin HTTP page. "
+        f"Observed URLs: {sorted(observed)}; last targets: {last_snapshot}"
+    )
 
 
 def main():
@@ -30,25 +108,24 @@ def main():
         "checks": {},
         "screenshots": [],
         "errors": [],
+        "diagnostics": {
+            "cdp": args.cdp,
+            "observed_urls": [],
+            "targets": [],
+        },
         "timestamp": time.strftime("%Y-%m-%dT%H:%M:%S%z"),
     }
 
+    page = None
     try:
         with sync_playwright() as p:
             browser = p.chromium.connect_over_cdp(args.cdp)
-            pages = [pg for c in browser.contexts for pg in c.pages]
-            if not pages:
-                raise RuntimeError("No pgAdmin page found through CDP")
-
-            page = max(pages, key=lambda x: len(x.url or ""))
-            page.wait_for_load_state("domcontentloaded", timeout=60000)
-            page.wait_for_selector("body", timeout=60000)
+            page, observed, targets = wait_for_stable_pgadmin_page(browser)
+            result["diagnostics"]["observed_urls"] = observed
+            result["diagnostics"]["targets"] = targets
+            result["diagnostics"]["selected_url"] = page.url
 
             # Persist Hebrew using pgAdmin's real Preferences API.
-            page.wait_for_function(
-                "() => window.pgAdmin && window.pgAdmin.csrf_token && window.pgAdmin.csrf_token_header",
-                timeout=60000,
-            )
             pref_result = page.evaluate(
                 """async () => {
                   const path = window.location.pathname || '/';
@@ -93,11 +170,17 @@ def main():
                 page.context.add_cookies(
                     [{"name": "PGADMIN_LANGUAGE", "value": "he", "url": origin}]
                 )
-            except Exception:
+            except PlaywrightError:
                 page.evaluate("document.cookie='PGADMIN_LANGUAGE=he; path=/'")
 
+            # Reload the already-stable main window so Flask/Babel sees the saved
+            # desktop preference and the template receives the Hebrew language.
             page.reload(wait_until="domcontentloaded", timeout=60000)
             page.wait_for_selector("body", timeout=60000)
+            page.wait_for_function(
+                "() => window.pgAdmin && window.pgAdmin.csrf_token",
+                timeout=60000,
+            )
             page.wait_for_timeout(2500)
 
             lang = page.locator("html").get_attribute("lang")
@@ -149,10 +232,13 @@ def main():
                 page.screenshot(path=str(menu_shot), full_page=True)
                 result["screenshots"].append(str(menu_shot))
                 result["checks"]["file_menu_hebrew"] = True
-            except Exception as e:
+            except Exception as exc:
                 result["checks"]["file_menu_hebrew"] = False
-                result["errors"].append(f"File menu: {e}")
-            page.keyboard.press("Escape")
+                result["errors"].append(f"File menu: {exc}")
+            try:
+                page.keyboard.press("Escape")
+            except PlaywrightError:
+                pass
 
             try:
                 page.get_by_text("קובץ", exact=True).first.click(timeout=10000)
@@ -166,12 +252,13 @@ def main():
                 pref_shot = shots / "02-preferences.png"
                 page.screenshot(path=str(pref_shot), full_page=True)
                 result["screenshots"].append(str(pref_shot))
-            except Exception as e:
+            except Exception as exc:
                 result["checks"]["preferences_hebrew"] = False
-                result["errors"].append(f"Preferences: {e}")
-                err_shot = shots / "99-error.png"
-                page.screenshot(path=str(err_shot), full_page=True)
-                result["screenshots"].append(str(err_shot))
+                result["errors"].append(f"Preferences: {exc}")
+                if page is not None and not page.is_closed():
+                    err_shot = shots / "99-error.png"
+                    page.screenshot(path=str(err_shot), full_page=True)
+                    result["screenshots"].append(str(err_shot))
 
             required = [
                 bool(result["checks"]["language_preference_api"].get("ok")),
@@ -186,8 +273,16 @@ def main():
             result["status"] = "passed" if all(required) else "failed"
             browser.close()
 
-    except Exception as e:
-        result["errors"].append(repr(e))
+    except Exception as exc:
+        result["errors"].append(repr(exc))
+        # Best-effort screenshot if a real page exists at failure time.
+        try:
+            if page is not None and not page.is_closed():
+                err_shot = shots / "99-error.png"
+                page.screenshot(path=str(err_shot), full_page=True)
+                result["screenshots"].append(str(err_shot))
+        except Exception as shot_exc:
+            result["errors"].append(f"Failure screenshot: {shot_exc}")
 
     report_path.write_text(
         json.dumps(result, ensure_ascii=False, indent=2) + "\n",
