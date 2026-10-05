@@ -247,30 +247,24 @@ def patch_base(text: str) -> tuple[str, bool]:
     newline = "\r\n" if "\r\n" in text else "\n"
     rtl_block = RTL_BLOCK.replace("\n", newline)
 
-    # Upgrade an older Hebrew RTL block in place. This is important for users
-    # rerunning the installer after visual RTL fixes: the original backup stays
-    # untouched, while the installed block is refreshed to the latest package.
-    if RTL_START in text:
-        start_marker = text.find("        /* " + RTL_START)
-        if start_marker < 0:
-            start_marker = text.find("/* " + RTL_START)
-        end_marker = text.find("/* " + RTL_END + " */")
-        if start_marker < 0 or end_marker < 0:
-            raise ValueError("Found an incomplete pgAdmin Hebrew RTL block in base.html")
-        end_marker += len("/* " + RTL_END + " */")
-        # Include the newline after the old block so repeated upgrades do not
-        # accumulate blank lines.
-        if text.startswith("\r\n", end_marker):
-            end_marker += 2
-        elif text.startswith("\n", end_marker):
-            end_marker += 1
-
-        current = text[start_marker:end_marker]
-        replacement = rtl_block
-        if current != replacement:
-            text = text[:start_marker] + replacement + text[end_marker:]
+    # Upgrade an older Hebrew RTL block in place. This lets repeated installs
+    # pick up visual RTL improvements while preserving the one-time backup of
+    # the untouched upstream base.html.
+    block_re = re.compile(
+        r"(?:\r?\n)?[ \t]*/\* " + re.escape(RTL_START) +
+        r".*?[ \t]*/\* " + re.escape(RTL_END) + r" \*/(?:\r?\n)?",
+        re.DOTALL,
+    )
+    existing = block_re.search(text)
+    if existing:
+        current = existing.group(0)
+        if current != rtl_block:
+            text = text[:existing.start()] + rtl_block + text[existing.end():]
             changed = True
         return text, changed
+
+    if RTL_START in text or RTL_END in text:
+        raise ValueError("Found an incomplete pgAdmin Hebrew RTL block in base.html")
 
     # First install: inject into the first CSP-protected <style> block. Match
     # structurally instead of relying on exact whitespace/newline bytes.
