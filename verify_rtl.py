@@ -57,6 +57,7 @@ def main() -> None:
     assert 'html[dir="rtl"] .MuiAlert-message' in patched
     assert 'html[dir="rtl"] .FormFooter-message' in patched
     assert '.PreferencesComponent-treeContainer .PgTree-tree > div' in patched
+    assert '.PreferencesComponent-treeContainer .PgTree-tree div' in patched
     assert '.PreferencesComponent-treeContainer .PgTree-defaultNode' in patched
     assert 'html[dir="rtl"] .file-tree .file-entry' in patched
     assert '.file-entry.depth-2 { padding-right: 16px !important; }' in patched
@@ -67,6 +68,7 @@ def main() -> None:
     assert "direction: ltr" in patched
     assert "PGADMIN_HEBREW_RUNTIME_START" in patched
     assert "replaceMenuOpen" in patched
+    assert "decodeTechnicalMessageEntities" in patched
     assert "setAutoDirection" in patched
     assert "[role=\"menuitem\"]" in patched or "[role='menuitem']" in patched
     assert "פתיחה" in patched
