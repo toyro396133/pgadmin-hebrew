@@ -1,128 +1,32 @@
 {
-  "status": "passed",
+  "status": "failed",
   "checks": {
     "language_preference_api": {
       "ok": true,
       "status": 200,
       "endpoint": "/preferences/update",
       "text": "{\"success\":1,\"errormsg\":\"\",\"info\":\"\",\"result\":null,\"data\":{\"data\":\"Success\"}}"
-    },
-    "html_lang_he": true,
-    "html_dir_rtl": true,
-    "body_direction_rtl": true,
-    "hebrew_ui_markers": {
-      "found": [
-        "לוח מחוונים",
-        "מאפיינים",
-        "סטטיסטיקות",
-        "תלויות",
-        "אובייקטים תלויים",
-        "תהליכים",
-        "סייר האובייקטים",
-        "ברוכים הבאים"
-      ],
-      "required": 5,
-      "pass": true
-    },
-    "object_explorer_rtl": {
-      "server_group_found": true,
-      "default_group_localized": true,
-      "row_rtl": true,
-      "row_right_aligned": true,
-      "left_padding_cleared": true
-    },
-    "technical_ltr": {
-      "codemirror": true,
-      "xterm": true,
-      "grid": true,
-      "numberInput": true
-    },
-    "more_menu_opened": true,
-    "more_menu_localized": true,
-    "preferences_hebrew": true,
-    "preferences_visual_rtl": {
-      "divider_on_right": true,
-      "no_left_divider": true,
-      "tree_x_clipped": true,
-      "tree_inner_x_clipped": true,
-      "tree_nodes_rtl": true,
-      "helper_rtl": true,
-      "alerts_plaintext": true,
-      "alerts_auto_direction": true,
-      "alerts_entities_decoded": true,
-      "technical_input_auto_direction": true,
-      "tree_has_no_visible_horizontal_scroll": true,
-      "no_page_horizontal_overflow": true
     }
   },
-  "screenshots": [
-    "artifacts\\screenshots\\00-main.png",
-    "artifacts\\screenshots\\01-more-menu.png",
-    "artifacts\\screenshots\\02-preferences.png"
+  "screenshots": [],
+  "errors": [
+    "Exception('Page.reload: Connection closed while reading from the driver')",
+    "Failure screenshot: Event loop is closed! Is Playwright already stopped?"
   ],
-  "errors": [],
   "diagnostics": {
-    "cdp": "http://127.0.0.1:65014",
+    "cdp": "http://127.0.0.1:53823",
     "observed_urls": [
-      "http://127.0.0.1:65016/browser/"
+      "http://127.0.0.1:58668/browser/"
     ],
     "targets": [
       {
         "context": 0,
         "page": 0,
-        "url": "http://127.0.0.1:65016/browser/",
+        "url": "http://127.0.0.1:58668/browser/",
         "closed": false
       }
     ],
-    "selected_url": "http://127.0.0.1:65016/browser/",
-    "object_explorer_rtl": {
-      "found": true,
-      "label": "שרתים",
-      "rowDirection": "rtl",
-      "rowTextAlign": "right",
-      "paddingLeft": "0px",
-      "paddingRight": "0px",
-      "toggleTransform": "matrix(-1, 0, 0, 1, 0, 0)"
-    },
-    "more_menu_texts": [
-      "סגירת הכול\nפתיחה",
-      "סגירת הכול",
-      "פתיחה",
-      "אין אפשרויות ",
-      "אין אפשרויות ",
-      "אין אפשרויות ",
-      "אין אפשרויות ",
-      "אין אפשרויות ",
-      "אין אפשרויות ",
-      "לא נבחר אובייקט ",
-      "לא נבחר אובייקט "
-    ],
-    "preferences_open_method": "quick-link",
-    "preferences_visual": {
-      "borderRightWidth": "1px",
-      "borderLeftWidth": "0px",
-      "treeOverflowX": "hidden",
-      "treeInnerOverflowX": "hidden",
-      "treeNodeDirection": "rtl",
-      "helperDirection": "rtl",
-      "helperTextAlign": "right",
-      "alertUnicodeBidi": "plaintext",
-      "alertDirAttribute": "auto",
-      "alertText": "<urlopen error [SSL: CERTIFICATE_VERIFY_FAILED]>",
-      "technicalInputDirAttribute": "auto",
-      "overflowingTreeDescendants": [
-        {
-          "tag": "DIV",
-          "className": "",
-          "role": null,
-          "clientWidth": 156,
-          "scrollWidth": 184,
-          "overflowX": "hidden",
-          "horizontallyScrollable": false
-        }
-      ],
-      "pageHasHorizontalOverflow": false
-    }
+    "selected_url": "http://127.0.0.1:58668/browser/"
   },
-  "timestamp": "2026-10-06T02:30:05+0300"
+  "timestamp": "2026-10-06T02:38:47+0300"
 }
