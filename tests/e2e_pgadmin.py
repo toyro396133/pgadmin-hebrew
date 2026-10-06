@@ -392,6 +392,53 @@ def main():
                 k: (v == "ltr") for k, v in tech.items()
             }
 
+            dock_tab_closes = page.evaluate(
+                """() => {
+                  const rows = Array.from(
+                    document.querySelectorAll(
+                      '.dock-tab .drag-initiator .dock-tab-close-btn'
+                    )
+                  ).map((close) => {
+                    const initiator = close.closest('.drag-initiator');
+                    const cr = close.getBoundingClientRect();
+                    const ir = initiator?.getBoundingClientRect() || null;
+                    const visible = cr.width > 0 && cr.height > 0;
+                    return {
+                      visible,
+                      closeCenter: cr.left + cr.width / 2,
+                      initiatorCenter: ir
+                        ? ir.left + ir.width / 2
+                        : null,
+                      onRight: Boolean(
+                        visible && ir
+                        && (cr.left + cr.width / 2)
+                          >= (ir.left + ir.width / 2)
+                      ),
+                      initiatorDirection: initiator
+                        ? getComputedStyle(initiator).direction
+                        : null,
+                    };
+                  }).filter((x) => x.visible);
+                  return {
+                    count: rows.length,
+                    allOnRight:
+                      rows.length > 0 && rows.every((x) => x.onRight),
+                    allLayoutLtr:
+                      rows.length > 0
+                      && rows.every(
+                        (x) => x.initiatorDirection === 'ltr'
+                      ),
+                    rows,
+                  };
+                }"""
+            )
+            result["diagnostics"]["dock_tab_close_buttons"] = dock_tab_closes
+            result["checks"]["dock_tab_close_buttons"] = {
+                "found": dock_tab_closes["count"] > 0,
+                "on_original_side": dock_tab_closes["allOnRight"],
+                "layout_ltr": dock_tab_closes["allLayoutLtr"],
+            }
+
             main_shot = shots / "00-main.png"
             page.screenshot(path=str(main_shot), full_page=True)
             result["screenshots"].append(str(main_shot))
@@ -701,23 +748,30 @@ def main():
                 dialog_visual = dialog.evaluate(
                     """(el) => {
                       const cs = getComputedStyle(el);
+                      const nav = el.querySelector('.dock-nav');
                       const activeTab =
                         el.querySelector('.dock-tab-active')
                         || el.querySelector('.dock-tab');
-                      const initiator =
-                        activeTab?.querySelector('.drag-initiator') || null;
-                      const close =
-                        activeTab?.querySelector('.dock-tab-close-btn') || null;
-                      const ir = initiator?.getBoundingClientRect() || null;
+                      const tabButton =
+                        activeTab?.querySelector('.dock-tab-btn') || null;
+                      const extra =
+                        el.querySelector('.dock-extra-content') || null;
+                      const close = extra?.querySelector(
+                        '.dock-tab-close-btn'
+                      ) || null;
+
+                      const er = el.getBoundingClientRect();
+                      const nr = nav?.getBoundingClientRect() || null;
+                      const tr = tabButton?.getBoundingClientRect() || null;
+                      const xr = extra?.getBoundingClientRect() || null;
                       const cr = close?.getBoundingClientRect() || null;
-                      const initiatorDirection = initiator
-                        ? getComputedStyle(initiator).direction
-                        : null;
+
                       const closeOnRight = Boolean(
-                        ir && cr
+                        cr
                         && (cr.left + cr.width / 2)
-                          >= (ir.left + ir.width / 2)
+                          >= (er.left + er.width / 2)
                       );
+
                       return {
                         direction: cs.direction,
                         textAlign: cs.textAlign,
@@ -725,16 +779,31 @@ def main():
                           el.scrollWidth > el.clientWidth + 1,
                         closeButtonFound: Boolean(close),
                         closeButtonOnRight: closeOnRight,
-                        closeInitiatorDirection: initiatorDirection,
+                        closeLayoutDirection: nav
+                          ? getComputedStyle(nav).direction
+                          : null,
+                        tabTitleDirection: tabButton
+                          ? getComputedStyle(tabButton).direction
+                          : null,
                         closeButtonRect: cr ? {
                           left: cr.left,
                           right: cr.right,
                           width: cr.width,
                         } : null,
-                        initiatorRect: ir ? {
-                          left: ir.left,
-                          right: ir.right,
-                          width: ir.width,
+                        extraRect: xr ? {
+                          left: xr.left,
+                          right: xr.right,
+                          width: xr.width,
+                        } : null,
+                        tabRect: tr ? {
+                          left: tr.left,
+                          right: tr.right,
+                          width: tr.width,
+                        } : null,
+                        navRect: nr ? {
+                          left: nr.left,
+                          right: nr.right,
+                          width: nr.width,
                         } : null,
                       };
                     }"""
@@ -770,7 +839,9 @@ def main():
                     "close_button_on_original_side":
                         dialog_visual["closeButtonOnRight"],
                     "close_layout_ltr":
-                        dialog_visual["closeInitiatorDirection"] == "ltr",
+                        dialog_visual["closeLayoutDirection"] == "ltr",
+                    "tab_title_rtl":
+                        dialog_visual["tabTitleDirection"] == "rtl",
                 }
 
                 register_general_shot = shots / "04-register-server.png"
@@ -1384,6 +1455,11 @@ def main():
                 result["checks"]["hebrew_ui_markers"]["pass"],
                 all(result["checks"]["object_explorer_rtl"].values()),
                 all(result["checks"]["technical_ltr"].values()),
+                all(
+                    result["checks"].get(
+                        "dock_tab_close_buttons", {}
+                    ).values()
+                ),
                 result["checks"].get("more_menu_opened", False),
                 result["checks"].get("more_menu_localized", False),
                 result["checks"].get("preferences_hebrew", False),
