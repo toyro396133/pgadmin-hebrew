@@ -397,7 +397,7 @@ def main():
                   const rows = Array.from(
                     document.querySelectorAll(
                       '.dock-tab .dock-tab-remove, '
-                      + "'.dock-tab .dock-tab-close-btn'"
+                      + '.dock-tab .dock-tab-close-btn'
                     )
                   ).map((close) => {
                     const tab = close.closest('.dock-tab');
