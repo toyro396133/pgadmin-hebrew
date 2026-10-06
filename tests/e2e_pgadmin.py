@@ -491,27 +491,28 @@ def main():
                     'xpath=ancestor::div[contains(@class,"file-entry")][1]'
                 )
                 server_group_row.click(button="right", timeout=10000)
-                page.wait_for_selector('[role="menu"]', timeout=10000)
+                context_menu = page.locator(
+                    'ul[aria-label="Object Context Menu"][data-state="open"]'
+                )
+                context_menu.wait_for(state="visible", timeout=10000)
                 page.wait_for_timeout(400)
 
                 context_items = [
                     t.strip()
-                    for t in page.locator('[role="menuitem"]').all_inner_texts()
+                    for t in context_menu.locator(
+                        '[role="menuitem"]'
+                    ).all_inner_texts()
                     if t.strip()
                 ]
-                context_visual = page.evaluate(
-                    """() => {
-                      const menu = Array.from(
-                        document.querySelectorAll('[role="menu"]')
-                      ).find((el) => {
-                        const r = el.getBoundingClientRect();
-                        return r.width > 0 && r.height > 0;
-                      });
-                      const cs = menu ? getComputedStyle(menu) : null;
+                context_visual = context_menu.evaluate(
+                    """(menu) => {
+                      const cs = getComputedStyle(menu);
                       return {
-                        found: Boolean(menu),
-                        direction: cs ? cs.direction : null,
-                        textAlign: cs ? cs.textAlign : null,
+                        found: true,
+                        direction: cs.direction,
+                        textAlign: cs.textAlign,
+                        ariaLabel: menu.getAttribute('aria-label'),
+                        state: menu.getAttribute('data-state'),
                       };
                     }"""
                 )
@@ -553,7 +554,14 @@ def main():
                     raise RuntimeError("Add New Server quick link was not found")
                 add_server.first.click(timeout=10000)
 
-                dialog = page.locator(".MuiDialog-root").last
+                title = page.get_by_text("רישום - שרת", exact=True)
+                if title.count() == 0:
+                    title = page.get_by_text("Register - Server", exact=True)
+                title.last.wait_for(state="visible", timeout=15000)
+
+                dialog = title.last.locator(
+                    'xpath=ancestor::div[contains(@class,"dock-fbox")][1]'
+                )
                 dialog.wait_for(state="visible", timeout=15000)
                 page.wait_for_timeout(1000)
 
@@ -588,7 +596,11 @@ def main():
                 page.screenshot(path=str(register_general_shot), full_page=True)
                 result["screenshots"].append(str(register_general_shot))
 
-                connection_tab = page.get_by_text("חיבור", exact=True)
+                connection_tab = dialog.get_by_text("חיבור", exact=True)
+                if connection_tab.count() == 0:
+                    connection_tab = dialog.get_by_text(
+                        "Connection", exact=True
+                    )
                 if connection_tab.count() == 0:
                     raise RuntimeError("Register Server Connection tab not found")
                 connection_tab.last.click(timeout=10000)
@@ -673,21 +685,26 @@ def main():
                 )
                 result["errors"].append(f"Register Server dialog: {exc}")
                 try:
-                    if page.locator(".MuiDialog-root").count() > 0:
+                    result["diagnostics"]["register_server_dockboxes"] = [
+                        t.strip()
+                        for t in page.locator(".dock-fbox").all_inner_texts()
+                        if t.strip()
+                    ]
+                    if page.locator(".dock-fbox").count() > 0:
                         err_shot = shots / "98-register-server-error.png"
                         page.screenshot(path=str(err_shot), full_page=True)
                         result["screenshots"].append(str(err_shot))
                 except Exception:
                     pass
             finally:
-                # Explicitly cancel. Never submit the form or persist a server.
+                # Explicitly close. Never submit/save the server form.
                 try:
-                    cancel = page.locator(
-                        'button[data-label="ביטול"], '
-                        'button[data-label="Cancel"]'
+                    close_btn = page.locator(
+                        '.dock-fbox button[data-label="סגירה"], '
+                        '.dock-fbox button[data-label="Close"]'
                     )
-                    if cancel.count() > 0 and cancel.last.is_visible():
-                        cancel.last.click(timeout=5000)
+                    if close_btn.count() > 0 and close_btn.last.is_visible():
+                        close_btn.last.click(timeout=5000)
                     else:
                         page.keyboard.press("Escape")
                     page.wait_for_timeout(500)
