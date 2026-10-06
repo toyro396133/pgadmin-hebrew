@@ -923,10 +923,16 @@ def main():
                               'pgAdmin Browser tree is unavailable'
                             );
                           }
-                          const item = tree.findNode(path);
-                          if (!item) {
+                          const wrapper = tree.findNode(path);
+                          if (!wrapper) {
                             throw new Error(
                               'Server tree node not found: ' + path
+                            );
+                          }
+                          const item = wrapper.domNode || wrapper;
+                          if (!item?.getMetadata) {
+                            throw new Error(
+                              'Server FileEntry is unavailable for: ' + path
                             );
                           }
 
@@ -981,10 +987,16 @@ def main():
                               'pgAdmin Browser tree is unavailable'
                             );
                           }
-                          const item = tree.findNode(path);
-                          if (!item) {
+                          const wrapper = tree.findNode(path);
+                          if (!wrapper) {
                             throw new Error(
                               'Server tree node not found: ' + path
+                            );
+                          }
+                          const item = wrapper.domNode || wrapper;
+                          if (!item?.getMetadata) {
+                            throw new Error(
+                              'Server FileEntry is unavailable for: ' + path
                             );
                           }
                           const data = tree.itemData(item) || {};
