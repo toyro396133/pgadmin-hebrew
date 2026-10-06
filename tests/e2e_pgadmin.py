@@ -788,12 +788,19 @@ def main():
                 }
 
             # Inspect an existing server without connecting to it or changing
-            # anything: context menu + Properties dialog only.
+            # connection state. Context menu is always safe. Properties are
+            # opened only when the server was already connected before this
+            # audit, because pgAdmin may establish a connection while opening
+            # properties for a disconnected server.
             server_inventory = result["diagnostics"].get(
                 "server_inventory", []
             )
             if server_inventory:
-                server_label = server_inventory[0].get("label") or ""
+                server_info = server_inventory[0]
+                server_label = server_info.get("label") or ""
+                initially_connected = bool(server_info.get("connected"))
+                properties_opened = False
+                server_row = None
                 try:
                     server_name = page.locator(
                         ".file-tree .file-entry .file-name"
@@ -801,6 +808,13 @@ def main():
                     server_row = server_name.locator(
                         'xpath=ancestor::div[contains(@class,"file-entry")][1]'
                     )
+
+                    before_icon = (
+                        server_row.locator(".file-icon")
+                        .first.get_attribute("class")
+                        or ""
+                    )
+
                     server_row.click(button="right", timeout=10000)
 
                     server_menu = page.locator(
@@ -826,6 +840,7 @@ def main():
                     )
                     result["diagnostics"]["existing_server_context_menu"] = {
                         "server": server_label,
+                        "initially_connected": initially_connected,
                         "items": server_menu_items,
                         **menu_visual,
                     }
@@ -836,8 +851,13 @@ def main():
                             x.startswith("מאפיינים")
                             for x in server_menu_items
                         ),
-                        "has_connect_action": any(
-                            "חיבור שרת" in x or "Connect Server" in x
+                        "has_connection_action": any(
+                            (
+                                "חיבור שרת" in x
+                                or "Connect Server" in x
+                                or "ניתוק מהשרת" in x
+                                or "Disconnect from server" in x
+                            )
                             for x in server_menu_items
                         ),
                     }
@@ -852,121 +872,198 @@ def main():
                         str(server_context_shot)
                     )
 
-                    properties_item = server_menu.locator(
-                        '[role="menuitem"][data-label="מאפיינים..."], '
-                        '[role="menuitem"][data-label="Properties..."]'
+                    # Right-click selection itself must never alter connection
+                    # state.
+                    page.keyboard.press("Escape")
+                    page.wait_for_timeout(600)
+                    after_context_icon = (
+                        server_row.locator(".file-icon")
+                        .first.get_attribute("class")
+                        or ""
                     )
-                    if properties_item.count() == 0:
-                        raise RuntimeError(
-                            "Server Properties context item not found"
-                        )
-                    properties_item.last.click(timeout=10000)
-
-                    properties_panel = page.locator(".dock-fbox").filter(
-                        has_text=server_label
-                    ).last
-                    properties_panel.wait_for(
-                        state="visible", timeout=15000
+                    after_context_connected = (
+                        "icon-server-not-connected"
+                        not in after_context_icon
+                        and "icon-shared-server-not-connected"
+                        not in after_context_icon
                     )
-                    page.wait_for_timeout(1000)
-
-                    properties_text = properties_panel.inner_text(
-                        timeout=10000
-                    )
-                    properties_visual = properties_panel.evaluate(
-                        """(el) => {
-                          const cs = getComputedStyle(el);
-                          return {
-                            direction: cs.direction,
-                            textAlign: cs.textAlign,
-                            hasHorizontalOverflow:
-                              el.scrollWidth > el.clientWidth + 1,
-                          };
-                        }"""
-                    )
-                    technical_fields = properties_panel.evaluate(
-                        """(root) => {
-                          const wanted = [
-                            'host', 'hostaddr', 'port', 'db',
-                            'username', 'password', 'service'
-                          ];
-                          const out = {};
-                          for (const name of wanted) {
-                            const el = root.querySelector(
-                              'input[name="' + name + '"], '
-                              + 'textarea[name="' + name + '"]'
-                            );
-                            if (!el) continue;
-                            const cs = getComputedStyle(el);
-                            out[name] = {
-                              direction: cs.direction,
-                              textAlign: cs.textAlign,
-                            };
-                          }
-                          return out;
-                        }"""
-                    )
-                    result["diagnostics"]["existing_server_properties"] = {
-                        "server": server_label,
-                        "markers_found": [
-                            x
-                            for x in ("כללי", "חיבור", "מתקדם")
-                            if x in properties_text
-                        ],
-                        "technical_fields": technical_fields,
-                        **properties_visual,
+                    result["diagnostics"]["server_connection_state"] = {
+                        "before_icon": before_icon,
+                        "after_context_icon": after_context_icon,
+                        "initially_connected": initially_connected,
+                        "after_context_connected":
+                            after_context_connected,
                     }
-                    result["checks"]["existing_server_properties_rtl"] = {
-                        "status": "checked",
-                        "panel_rtl":
-                            properties_visual["direction"] == "rtl",
-                        "hebrew_tabs":
-                            sum(
-                                1
+                    result["checks"]["server_connection_state_preserved"] = (
+                        after_context_connected == initially_connected
+                    )
+
+                    if not result["checks"][
+                        "server_connection_state_preserved"
+                    ]:
+                        raise RuntimeError(
+                            "Server connection state changed during "
+                            "context-menu audit"
+                        )
+
+                    if not initially_connected:
+                        result["checks"][
+                            "existing_server_properties_rtl"
+                        ] = {
+                            "status": "skipped",
+                            "reason": (
+                                "Server was disconnected before the audit; "
+                                "Properties was not opened to avoid triggering "
+                                "a connection."
+                            ),
+                        }
+                    else:
+                        # Re-open the context menu only for a server that was
+                        # already connected before the audit.
+                        server_row.click(button="right", timeout=10000)
+                        server_menu = page.locator(
+                            'ul[aria-label="Object Context Menu"]'
+                            '[data-state="open"]'
+                        )
+                        server_menu.wait_for(
+                            state="visible", timeout=10000
+                        )
+                        properties_item = server_menu.locator(
+                            '[role="menuitem"][data-label="מאפיינים..."], '
+                            '[role="menuitem"][data-label="Properties..."]'
+                        )
+                        if properties_item.count() == 0:
+                            raise RuntimeError(
+                                "Server Properties context item not found"
+                            )
+                        properties_item.last.click(timeout=10000)
+                        properties_opened = True
+
+                        properties_panel = page.locator(
+                            ".dock-fbox"
+                        ).filter(has_text=server_label).last
+                        properties_panel.wait_for(
+                            state="visible", timeout=15000
+                        )
+                        page.wait_for_timeout(1000)
+
+                        properties_text = properties_panel.inner_text(
+                            timeout=10000
+                        )
+                        properties_visual = properties_panel.evaluate(
+                            """(el) => {
+                              const cs = getComputedStyle(el);
+                              return {
+                                direction: cs.direction,
+                                textAlign: cs.textAlign,
+                                hasHorizontalOverflow:
+                                  el.scrollWidth > el.clientWidth + 1,
+                              };
+                            }"""
+                        )
+                        technical_fields = properties_panel.evaluate(
+                            """(root) => {
+                              const wanted = [
+                                'host', 'hostaddr', 'port', 'db',
+                                'username', 'password', 'service'
+                              ];
+                              const out = {};
+                              for (const name of wanted) {
+                                const el = root.querySelector(
+                                  'input[name="' + name + '"], '
+                                  + 'textarea[name="' + name + '"]'
+                                );
+                                if (!el) continue;
+                                const cs = getComputedStyle(el);
+                                out[name] = {
+                                  direction: cs.direction,
+                                  textAlign: cs.textAlign,
+                                };
+                              }
+                              return out;
+                            }"""
+                        )
+                        result["diagnostics"][
+                            "existing_server_properties"
+                        ] = {
+                            "server": server_label,
+                            "markers_found": [
+                                x
                                 for x in ("כללי", "חיבור", "מתקדם")
                                 if x in properties_text
-                            ) >= 2,
-                        "no_horizontal_overflow":
-                            not properties_visual[
-                                "hasHorizontalOverflow"
                             ],
-                        "technical_fields_ltr":
-                            bool(technical_fields)
-                            and all(
-                                data["direction"] == "ltr"
-                                for data in technical_fields.values()
-                            ),
-                    }
+                            "technical_fields": technical_fields,
+                            **properties_visual,
+                        }
+                        result["checks"][
+                            "existing_server_properties_rtl"
+                        ] = {
+                            "status": "checked",
+                            "panel_rtl":
+                                properties_visual["direction"] == "rtl",
+                            "hebrew_tabs":
+                                sum(
+                                    1
+                                    for x in ("כללי", "חיבור", "מתקדם")
+                                    if x in properties_text
+                                ) >= 2,
+                            "no_horizontal_overflow":
+                                not properties_visual[
+                                    "hasHorizontalOverflow"
+                                ],
+                            "technical_fields_ltr":
+                                bool(technical_fields)
+                                and all(
+                                    data["direction"] == "ltr"
+                                    for data in technical_fields.values()
+                                ),
+                        }
 
-                    properties_shot = shots / "07-server-properties.png"
-                    page.screenshot(
-                        path=str(properties_shot), full_page=True
-                    )
-                    result["screenshots"].append(str(properties_shot))
+                        properties_shot = (
+                            shots / "07-server-properties.png"
+                        )
+                        page.screenshot(
+                            path=str(properties_shot),
+                            full_page=True,
+                        )
+                        result["screenshots"].append(
+                            str(properties_shot)
+                        )
 
                 except Exception as exc:
-                    result["checks"]["existing_server_context_menu_rtl"] = {
-                        "status": "failed",
-                        "pass": False,
-                    }
-                    result["checks"]["existing_server_properties_rtl"] = {
-                        "status": "failed",
-                        "pass": False,
-                    }
+                    result["checks"].setdefault(
+                        "existing_server_context_menu_rtl",
+                        {
+                            "status": "failed",
+                            "pass": False,
+                        },
+                    )
+                    result["checks"].setdefault(
+                        "existing_server_properties_rtl",
+                        {
+                            "status": "failed",
+                            "pass": False,
+                        },
+                    )
+                    result["checks"].setdefault(
+                        "server_connection_state_preserved",
+                        False,
+                    )
                     result["errors"].append(
                         f"Existing server non-destructive audit: {exc}"
                     )
                 finally:
                     try:
-                        close_btn = page.locator(
-                            '.dock-fbox button[data-label="סגירה"], '
-                            '.dock-fbox button[data-label="Close"]'
-                        )
-                        if (
-                            close_btn.count() > 0
-                            and close_btn.last.is_visible()
-                        ):
-                            close_btn.last.click(timeout=5000)
+                        if properties_opened:
+                            close_btn = page.locator(
+                                '.dock-fbox button[data-label="סגירה"], '
+                                '.dock-fbox button[data-label="Close"]'
+                            )
+                            if (
+                                close_btn.count() > 0
+                                and close_btn.last.is_visible()
+                            ):
+                                close_btn.last.click(timeout=5000)
                         else:
                             page.keyboard.press("Escape")
                         page.wait_for_timeout(500)
@@ -984,6 +1081,7 @@ def main():
                     "status": "skipped",
                     "reason": "No existing server is configured.",
                 }
+                result["checks"]["server_connection_state_preserved"] = True
 
             def optional_check(name):
                 data = result["checks"].get(name, {})
@@ -1026,6 +1124,9 @@ def main():
                 ),
                 optional_check("existing_server_context_menu_rtl"),
                 optional_check("existing_server_properties_rtl"),
+                result["checks"].get(
+                    "server_connection_state_preserved", False
+                ),
             ]
             result["status"] = "passed" if all(required) else "failed"
             browser.close()
