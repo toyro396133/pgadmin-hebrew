@@ -102,6 +102,28 @@ def wait_for_stable_pgadmin_page(browser, timeout_ms: int = 90000):
     )
 
 
+def wait_for_pgadmin_ui_ready(page, timeout_ms: int = 90000):
+    """Wait for the React browser UI, not just Flask/window.pgAdmin bootstrap."""
+    page.wait_for_function(
+        """() => {
+          const bodyText = (document.body?.innerText || '').trim();
+          const tree = window.pgAdmin?.Browser?.tree;
+          const treeRow = document.querySelector('.file-tree .file-entry');
+          return Boolean(
+            tree
+            && treeRow
+            && bodyText.length > 80
+            && document.documentElement.lang
+            && document.documentElement.dir
+          );
+        }""",
+        timeout=timeout_ms,
+    )
+    # Let the first layout/portal cycle settle before taking screenshots or
+    # opening menus/dialogs.
+    page.wait_for_timeout(800)
+
+
 def wait_for_cdp_endpoint(cdp: str, timeout_s: float = 30.0) -> bool:
     deadline = time.monotonic() + timeout_s
     url = cdp.rstrip("/") + "/json/version"
@@ -290,7 +312,7 @@ def main():
                 "() => window.pgAdmin && window.pgAdmin.csrf_token",
                 timeout=60000,
             )
-            page.wait_for_timeout(2500)
+            wait_for_pgadmin_ui_ready(page, timeout_ms=90000)
 
             lang = page.locator("html").get_attribute("lang")
             direction = page.locator("html").get_attribute("dir")
@@ -298,6 +320,16 @@ def main():
             result["checks"]["html_lang_he"] = lang == "he"
             result["checks"]["html_dir_rtl"] = direction == "rtl"
             result["checks"]["body_direction_rtl"] = body_dir == "rtl"
+
+            result["diagnostics"]["ui_ready"] = page.evaluate(
+                """() => ({
+                  bodyTextLength: (document.body?.innerText || '').trim().length,
+                  treeRows: document.querySelectorAll(
+                    '.file-tree .file-entry'
+                  ).length,
+                  hasBrowserTree: Boolean(window.pgAdmin?.Browser?.tree),
+                })"""
+            )
 
             body_text = page.locator("body").inner_text(timeout=30000)
             found = [x for x in EXPECTED_HE if x in body_text]
@@ -923,16 +955,20 @@ def main():
                               'pgAdmin Browser tree is unavailable'
                             );
                           }
-                          const wrapper = tree.findNode(path);
-                          if (!wrapper) {
-                            throw new Error(
-                              'Server tree node not found: ' + path
+                          let item = null;
+                          for (const group of tree.children() || []) {
+                            const groupData = tree.itemData(group) || {};
+                            if (groupData._type !== 'server_group') continue;
+                            await tree.ensureLoaded(group);
+                            item = (tree.children(group) || []).find(
+                              (child) => child.path === path
                             );
+                            if (item) break;
                           }
-                          const item = wrapper.domNode || wrapper;
-                          if (!item?.getMetadata) {
+                          if (!item) {
                             throw new Error(
-                              'Server FileEntry is unavailable for: ' + path
+                              'Server FileEntry not found in tree model: '
+                              + path
                             );
                           }
 
@@ -987,16 +1023,19 @@ def main():
                               'pgAdmin Browser tree is unavailable'
                             );
                           }
-                          const wrapper = tree.findNode(path);
-                          if (!wrapper) {
-                            throw new Error(
-                              'Server tree node not found: ' + path
+                          let item = null;
+                          for (const group of tree.children() || []) {
+                            const groupData = tree.itemData(group) || {};
+                            if (groupData._type !== 'server_group') continue;
+                            item = (tree.children(group) || []).find(
+                              (child) => child.path === path
                             );
+                            if (item) break;
                           }
-                          const item = wrapper.domNode || wrapper;
-                          if (!item?.getMetadata) {
+                          if (!item) {
                             throw new Error(
-                              'Server FileEntry is unavailable for: ' + path
+                              'Server FileEntry not found in tree model: '
+                              + path
                             );
                           }
                           const data = tree.itemData(item) || {};
