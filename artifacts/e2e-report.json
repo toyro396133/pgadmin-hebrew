@@ -1,5 +1,5 @@
 {
-  "status": "failed",
+  "status": "passed",
   "checks": {
     "language_preference_api": {
       "ok": true,
@@ -11,15 +11,24 @@
     "html_dir_rtl": true,
     "body_direction_rtl": true,
     "hebrew_ui_markers": {
-      "found": [],
+      "found": [
+        "לוח מחוונים",
+        "מאפיינים",
+        "סטטיסטיקות",
+        "תלויות",
+        "אובייקטים תלויים",
+        "תהליכים",
+        "סייר האובייקטים",
+        "ברוכים הבאים"
+      ],
       "required": 5,
-      "pass": false
+      "pass": true
     },
     "object_explorer_rtl": {
-      "server_group_found": false,
+      "server_group_found": true,
       "default_group_localized": true,
-      "row_rtl": false,
-      "row_right_aligned": false,
+      "row_rtl": true,
+      "row_right_aligned": true,
       "left_padding_cleared": true
     },
     "technical_ltr": {
@@ -28,8 +37,23 @@
       "grid": true,
       "numberInput": true
     },
-    "more_menu_opened": false,
-    "preferences_hebrew": false,
+    "more_menu_opened": true,
+    "more_menu_localized": true,
+    "preferences_hebrew": true,
+    "preferences_visual_rtl": {
+      "divider_on_right": true,
+      "no_left_divider": true,
+      "tree_x_clipped": true,
+      "tree_inner_x_clipped": true,
+      "tree_nodes_rtl": true,
+      "helper_rtl": true,
+      "alerts_plaintext": true,
+      "alerts_auto_direction": true,
+      "alerts_entities_decoded": true,
+      "technical_input_auto_direction": true,
+      "tree_has_no_visible_horizontal_scroll": true,
+      "no_page_horizontal_overflow": true
+    },
     "server_group_context_menu_rtl": {
       "menu_found": true,
       "menu_rtl": true,
@@ -53,55 +77,98 @@
       "reason": "No already-connected server detected; no connection was attempted."
     },
     "existing_server_context_menu_rtl": {
-      "status": "failed",
-      "pass": false
+      "status": "checked",
+      "menu_rtl": true,
+      "has_properties": true,
+      "has_connection_action": true
     },
+    "server_connection_state_preserved": true,
     "existing_server_properties_rtl": {
-      "status": "failed",
-      "pass": false
-    },
-    "server_connection_state_preserved": false
+      "status": "skipped",
+      "reason": "Server was disconnected before the audit; Properties was not opened to avoid triggering a connection."
+    }
   },
   "screenshots": [
     "artifacts\\screenshots\\00-main.png",
-    "artifacts\\screenshots\\99-error.png",
+    "artifacts\\screenshots\\01-more-menu.png",
+    "artifacts\\screenshots\\02-preferences.png",
     "artifacts\\screenshots\\03-object-context-menu.png",
     "artifacts\\screenshots\\04-register-server.png",
-    "artifacts\\screenshots\\05-register-server-connection.png"
+    "artifacts\\screenshots\\05-register-server-connection.png",
+    "artifacts\\screenshots\\06-server-context-menu.png"
   ],
-  "errors": [
-    "More menu: Could not locate pgAdmin More toolbar button",
-    "Preferences: Page.evaluate: TypeError: Cannot read properties of undefined (reading 'focus')\n    at l.show (http://127.0.0.1:55011/static/js/generated/app.bundle.js?ver=91800:2:1228783)\n    at eval (eval at evaluate (:311:30), <anonymous>:3:60)\n    at UtilityScript.evaluate (<anonymous>:318:18)\n    at UtilityScript.<anonymous> (<anonymous>:1:44)",
-    "Existing server non-destructive audit: Page.evaluate: Error: Server FileEntry is unavailable for: /browser/server_group_1/server_1\n    at eval (eval at evaluate (:311:30), <anonymous>:16:35)\n    at UtilityScript.evaluate (<anonymous>:318:18)\n    at UtilityScript.<anonymous> (<anonymous>:1:44)"
-  ],
+  "errors": [],
   "diagnostics": {
-    "cdp": "http://127.0.0.1:55007",
+    "cdp": "http://127.0.0.1:53169",
     "observed_urls": [
-      "http://127.0.0.1:55011/browser/"
+      "http://127.0.0.1:54188/browser/"
     ],
     "targets": [
       {
         "context": 0,
         "page": 0,
-        "url": "http://127.0.0.1:55011/browser/",
+        "url": "http://127.0.0.1:54188/browser/",
         "closed": false
       }
     ],
-    "selected_url": "http://127.0.0.1:55011/browser/",
+    "selected_url": "http://127.0.0.1:54188/browser/",
     "language_reload_needed": true,
     "language_reload_recovery": {
       "triggered": false
     },
-    "object_explorer_rtl": {
-      "found": false,
-      "label": null,
-      "rowDirection": null,
-      "rowTextAlign": null,
-      "paddingLeft": null,
-      "paddingRight": null,
-      "toggleTransform": null
+    "ui_ready": {
+      "bodyTextLength": 451,
+      "treeRows": 1,
+      "hasBrowserTree": true
     },
-    "failure_body_excerpt": "",
+    "object_explorer_rtl": {
+      "found": true,
+      "label": "שרתים",
+      "rowDirection": "rtl",
+      "rowTextAlign": "right",
+      "paddingLeft": "0px",
+      "paddingRight": "0px",
+      "toggleTransform": "matrix(-1, 0, 0, 1, 0, 0)"
+    },
+    "more_menu_texts": [
+      "סגירת הכול\nפתיחה",
+      "סגירת הכול",
+      "פתיחה",
+      "אין אפשרויות ",
+      "אין אפשרויות ",
+      "אין אפשרויות ",
+      "אין אפשרויות ",
+      "אין אפשרויות ",
+      "אין אפשרויות ",
+      "לא נבחר אובייקט ",
+      "לא נבחר אובייקט "
+    ],
+    "preferences_open_method": "quick-link",
+    "preferences_visual": {
+      "borderRightWidth": "1px",
+      "borderLeftWidth": "0px",
+      "treeOverflowX": "hidden",
+      "treeInnerOverflowX": "hidden",
+      "treeNodeDirection": "rtl",
+      "helperDirection": "rtl",
+      "helperTextAlign": "right",
+      "alertUnicodeBidi": "plaintext",
+      "alertDirAttribute": "auto",
+      "alertText": "<urlopen error [SSL: CERTIFICATE_VERIFY_FAILED]>",
+      "technicalInputDirAttribute": "auto",
+      "overflowingTreeDescendants": [
+        {
+          "tag": "DIV",
+          "className": "",
+          "role": null,
+          "clientWidth": 156,
+          "scrollWidth": 184,
+          "overflowX": "hidden",
+          "horizontallyScrollable": false
+        }
+      ],
+      "pageHasHorizontalOverflow": false
+    },
     "server_group_context_menu": {
       "items": [
         "רישום",
@@ -177,7 +244,44 @@
         "connected": false,
         "path": "/browser/server_group_1/server_1"
       }
-    ]
+    ],
+    "existing_server_context_menu": {
+      "server": "PostgreSQL 18",
+      "path": "/browser/server_group_1/server_1",
+      "initial_model_state": {
+        "connected": false,
+        "icon": "icon-server-not-connected",
+        "label": "PostgreSQL 18",
+        "domFound": true,
+        "path": "/browser/server_group_1/server_1"
+      },
+      "items": [
+        "רישום",
+        "רענון...\nF5",
+        "העתקת שרת...",
+        "חיבור שרת",
+        "הסרת שרת\nAlt + Shift + D",
+        "מאפיינים...\nAlt + Shift + E"
+      ],
+      "direction": "rtl",
+      "textAlign": "start"
+    },
+    "server_connection_state": {
+      "initially_connected": false,
+      "before": {
+        "connected": false,
+        "icon": "icon-server-not-connected",
+        "label": "PostgreSQL 18",
+        "domFound": true,
+        "path": "/browser/server_group_1/server_1"
+      },
+      "after_context": {
+        "connected": false,
+        "icon": "icon-server-not-connected",
+        "label": "PostgreSQL 18",
+        "path": "/browser/server_group_1/server_1"
+      }
+    }
   },
-  "timestamp": "2026-10-06T06:57:46+0300"
+  "timestamp": "2026-10-06T07:03:23+0300"
 }
