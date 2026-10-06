@@ -226,8 +226,8 @@ RTL_BLOCK = """
           transform-origin: center;
         }
 
-        /* rc-dock tab close buttons are controls, not RTL content. Keep their
-         * original visual side while the Hebrew tab title itself stays RTL. */
+        /* rc-dock close buttons are controls, not RTL content. Keep their
+         * original physical side while Hebrew tab titles themselves stay RTL. */
         html[dir="rtl"] .dock-tab .drag-initiator {
           direction: ltr !important;
         }
@@ -240,6 +240,29 @@ RTL_BLOCK = """
 
         html[dir="rtl"] .dock-tab .dock-tab-close-btn {
           margin-left: 8px !important;
+          margin-right: 0 !important;
+        }
+
+        /* Float dialogs use rc-tabs' right-side extra content for their panel
+         * close control. The page-level RTL direction otherwise moves that
+         * whole extra-content slot to the left edge. Preserve the outer
+         * control geometry as LTR, then make only the tab strip/title RTL. */
+        html[dir="rtl"] .dock-fbox .dock-nav {
+          direction: ltr !important;
+        }
+
+        html[dir="rtl"] .dock-fbox .dock-nav-wrap,
+        html[dir="rtl"] .dock-fbox .dock-nav-list,
+        html[dir="rtl"] .dock-fbox .dock-tab-btn {
+          direction: rtl !important;
+        }
+
+        html[dir="rtl"] .dock-fbox .dock-extra-content {
+          direction: ltr !important;
+        }
+
+        html[dir="rtl"] .dock-fbox .dock-extra-content .dock-tab-close-btn {
+          margin-left: 0 !important;
           margin-right: 0 !important;
         }
 
