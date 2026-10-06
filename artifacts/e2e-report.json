@@ -37,6 +37,11 @@
       "grid": true,
       "numberInput": true
     },
+    "dock_tab_close_buttons": {
+      "found": false,
+      "on_original_side": false,
+      "layout_ltr": false
+    },
     "more_menu_opened": true,
     "more_menu_localized": true,
     "preferences_hebrew": true,
@@ -67,7 +72,8 @@
       "server_group_display_localized": true,
       "close_button_found": false,
       "close_button_on_original_side": false,
-      "close_layout_ltr": true
+      "close_layout_ltr": true,
+      "tab_title_rtl": true
     },
     "register_server_connection_form": {
       "hebrew_markers": true,
@@ -102,19 +108,19 @@
   ],
   "errors": [],
   "diagnostics": {
-    "cdp": "http://127.0.0.1:52534",
+    "cdp": "http://127.0.0.1:49882",
     "observed_urls": [
-      "http://127.0.0.1:55804/browser/"
+      "http://127.0.0.1:53169/browser/"
     ],
     "targets": [
       {
         "context": 0,
         "page": 0,
-        "url": "http://127.0.0.1:55804/browser/",
+        "url": "http://127.0.0.1:53169/browser/",
         "closed": false
       }
     ],
-    "selected_url": "http://127.0.0.1:55804/browser/",
+    "selected_url": "http://127.0.0.1:53169/browser/",
     "language_reload_needed": true,
     "language_reload_recovery": {
       "triggered": false
@@ -132,6 +138,12 @@
       "paddingLeft": "0px",
       "paddingRight": "0px",
       "toggleTransform": "matrix(-1, 0, 0, 1, 0, 0)"
+    },
+    "dock_tab_close_buttons": {
+      "count": 0,
+      "allOnRight": false,
+      "allLayoutLtr": false,
+      "rows": []
     },
     "more_menu_texts": [
       "סגירת הכול\nפתיחה",
@@ -198,12 +210,23 @@
       "hasHorizontalOverflow": false,
       "closeButtonFound": false,
       "closeButtonOnRight": false,
-      "closeInitiatorDirection": "ltr",
+      "closeLayoutDirection": "ltr",
+      "tabTitleDirection": "rtl",
       "closeButtonRect": null,
-      "initiatorRect": {
-        "left": 724.09375,
-        "right": 826.5,
-        "width": 102.40625
+      "extraRect": {
+        "left": 802.5,
+        "right": 834.5,
+        "width": 32
+      },
+      "tabRect": {
+        "left": 684.09375,
+        "right": 802.5,
+        "width": 118.40625
+      },
+      "navRect": {
+        "left": 134.5,
+        "right": 834.5,
+        "width": 700
       },
       "server_group_display": "שרתים"
     },
@@ -295,5 +318,5 @@
       }
     }
   },
-  "timestamp": "2026-10-06T07:18:00+0300"
+  "timestamp": "2026-10-06T07:27:54+0300"
 }
