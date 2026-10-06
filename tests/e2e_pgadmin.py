@@ -701,11 +701,41 @@ def main():
                 dialog_visual = dialog.evaluate(
                     """(el) => {
                       const cs = getComputedStyle(el);
+                      const activeTab =
+                        el.querySelector('.dock-tab-active')
+                        || el.querySelector('.dock-tab');
+                      const initiator =
+                        activeTab?.querySelector('.drag-initiator') || null;
+                      const close =
+                        activeTab?.querySelector('.dock-tab-close-btn') || null;
+                      const ir = initiator?.getBoundingClientRect() || null;
+                      const cr = close?.getBoundingClientRect() || null;
+                      const initiatorDirection = initiator
+                        ? getComputedStyle(initiator).direction
+                        : null;
+                      const closeOnRight = Boolean(
+                        ir && cr
+                        && (cr.left + cr.width / 2)
+                          >= (ir.left + ir.width / 2)
+                      );
                       return {
                         direction: cs.direction,
                         textAlign: cs.textAlign,
                         hasHorizontalOverflow:
                           el.scrollWidth > el.clientWidth + 1,
+                        closeButtonFound: Boolean(close),
+                        closeButtonOnRight: closeOnRight,
+                        closeInitiatorDirection: initiatorDirection,
+                        closeButtonRect: cr ? {
+                          left: cr.left,
+                          right: cr.right,
+                          width: cr.width,
+                        } : null,
+                        initiatorRect: ir ? {
+                          left: ir.left,
+                          right: ir.right,
+                          width: ir.width,
+                        } : null,
                       };
                     }"""
                 )
@@ -735,6 +765,12 @@ def main():
                         not dialog_visual["hasHorizontalOverflow"],
                     "server_group_display_localized":
                         server_group_display_text in (None, "שרתים"),
+                    "close_button_found":
+                        dialog_visual["closeButtonFound"],
+                    "close_button_on_original_side":
+                        dialog_visual["closeButtonOnRight"],
+                    "close_layout_ltr":
+                        dialog_visual["closeInitiatorDirection"] == "ltr",
                 }
 
                 register_general_shot = shots / "04-register-server.png"
