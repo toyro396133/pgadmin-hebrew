@@ -396,12 +396,12 @@ def main():
                 """() => {
                   const rows = Array.from(
                     document.querySelectorAll(
-                      '.dock-tab .drag-initiator .dock-tab-close-btn'
+                      '.dock-tab .dock-tab-close-btn'
                     )
                   ).map((close) => {
-                    const initiator = close.closest('.drag-initiator');
+                    const tab = close.closest('.dock-tab');
                     const cr = close.getBoundingClientRect();
-                    const ir = initiator?.getBoundingClientRect() || null;
+                    const ir = tab?.getBoundingClientRect() || null;
                     const visible = cr.width > 0 && cr.height > 0;
                     return {
                       visible,
@@ -414,8 +414,8 @@ def main():
                         && (cr.left + cr.width / 2)
                           >= (ir.left + ir.width / 2)
                       ),
-                      initiatorDirection: initiator
-                        ? getComputedStyle(initiator).direction
+                      initiatorDirection: tab
+                        ? getComputedStyle(tab).direction
                         : null,
                     };
                   }).filter((x) => x.visible);
@@ -756,19 +756,16 @@ def main():
                         activeTab?.querySelector('.dock-tab-btn') || null;
                       const extra =
                         el.querySelector('.dock-extra-content') || null;
-                      const close = extra?.querySelector(
-                        '.dock-tab-close-btn'
-                      ) || null;
 
                       const er = el.getBoundingClientRect();
                       const nr = nav?.getBoundingClientRect() || null;
                       const tr = tabButton?.getBoundingClientRect() || null;
                       const xr = extra?.getBoundingClientRect() || null;
-                      const cr = close?.getBoundingClientRect() || null;
 
                       const closeOnRight = Boolean(
-                        cr
-                        && (cr.left + cr.width / 2)
+                        xr
+                        && xr.width > 0
+                        && (xr.left + xr.width / 2)
                           >= (er.left + er.width / 2)
                       );
 
@@ -777,7 +774,9 @@ def main():
                         textAlign: cs.textAlign,
                         hasHorizontalOverflow:
                           el.scrollWidth > el.clientWidth + 1,
-                        closeButtonFound: Boolean(close),
+                        closeButtonFound: Boolean(
+                          extra && xr && xr.width > 0 && xr.height > 0
+                        ),
                         closeButtonOnRight: closeOnRight,
                         closeLayoutDirection: nav
                           ? getComputedStyle(nav).direction
@@ -785,10 +784,10 @@ def main():
                         tabTitleDirection: tabButton
                           ? getComputedStyle(tabButton).direction
                           : null,
-                        closeButtonRect: cr ? {
-                          left: cr.left,
-                          right: cr.right,
-                          width: cr.width,
+                        closeButtonRect: xr ? {
+                          left: xr.left,
+                          right: xr.right,
+                          width: xr.width,
                         } : null,
                         extraRect: xr ? {
                           left: xr.left,
@@ -952,8 +951,7 @@ def main():
                 # Explicitly close. Never submit/save the server form.
                 try:
                     close_btn = page.locator(
-                        '.dock-fbox .dock-extra-content '
-                        '.dock-tab-close-btn, '
+                        '.dock-fbox .dock-extra-content, '
                         '.dock-fbox button[data-label="סגירה"], '
                         '.dock-fbox button[data-label="Close"]'
                     )
