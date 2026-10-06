@@ -333,6 +333,17 @@ RUNTIME_SHIM = """
         label.textContent = 'שרתים';
       }
     }
+
+    // react-select uses the same server-group icon next to the visible option
+    // label. Change only the rendered label; the option value/ID is untouched.
+    for (const label of candidates(
+      root,
+      '.Form-optionIcon.icon-server_group + span'
+    )) {
+      if ((label.textContent || '').trim() === 'Servers') {
+        label.textContent = 'שרתים';
+      }
+    }
   }
 
   function decodeTechnicalMessageEntities(root) {
