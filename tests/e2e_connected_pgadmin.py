@@ -644,6 +644,8 @@ def main():
                 close_tab = first_visible(
                     page.locator(
                         'div[data-dockid="id-main"] '
+                        '.dock-tab.dock-tab-active .dock-tab-remove, '
+                        'div[data-dockid="id-main"] '
                         '.dock-tab.dock-tab-active .dock-tab-close-btn, '
                         'div[data-dockid="id-main"] '
                         '.dock-tab.dock-tab-active button[data-label="סגירה"], '
