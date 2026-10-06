@@ -83,10 +83,11 @@ python .\verify_upstream.py .\messages-v9.18.pot
 
 ## RTL
 
-החבילה כוללת כעת **RTL baseline עובד** ל־Hebrew. `base.html` מקבל `dir="rtl"` רק כאשר `PGADMIN_LANGUAGE=he`, ובמקביל CodeMirror, xterm, קוד ו־Data Grid נשארים LTR כדי לא לשבש SQL וסדר עמודות.
+החבילה כוללת RTL סמנטי + שכבת תיקוני UI שנבדקת מול pgAdmin Desktop 9.18 אמיתי. `base.html` מקבל `dir="rtl"` רק כאשר `PGADMIN_LANGUAGE=he`, ובמקביל CodeMirror, xterm, קוד, שדות חיבור/נתיבים ו־Data Grid נשארים LTR כדי לא לשבש SQL, כתובות, נתיבים וסדר עמודות.
 
-הפתרון אינו מחייב build מחדש של frontend ולכן מתאים גם להתקנת pgAdmin קיימת. הוא עדיין דורש סבב בדיקות חזותי בתוך pgAdmin, משום ש־9.18 אינו כולל תשתית מלאה למירור רכיבי MUI/Emotion. ראו `RTL.md`.
+נוספו תיקונים נקודתיים ל־Preferences, Object Explorer, תפריטים, rc-dock dialogs וטאבים. בפרט, כפתורי הסגירה של rc-dock נשארים בצד המקורי שלהם גם כשהכותרת עצמה RTL.
 
+הפתרון אינו מחייב build מחדש של frontend ולכן מתאים גם להתקנת pgAdmin קיימת. ראו `RTL.md` ו־`STATUS.md` לכיסוי המאומת.
 
 ## בנייה ניתנת לשחזור
 
@@ -102,9 +103,29 @@ powershell -ExecutionPolicy Bypass -File .\setup-and-test.ps1
 
 The runner installs the Hebrew localization into pgAdmin 4 v9.18, executes all
 offline QA checks, launches the installed desktop runtime with Chromium DevTools,
-checks Hebrew + RTL in the real UI, captures the main screen/File menu/Preferences,
-and commits + pushes the new screenshots and JSON report. Screenshots from the
-previous run are deleted before capture, so Git always reflects the latest run.
+checks Hebrew + RTL in the real UI, captures Dashboard/Object Explorer/menus/
+Preferences/Register Server and the existing-server context menu, and commits +
+pushes the screenshots and JSON report. Screenshots from the previous run are
+deleted before capture, so Git always reflects the latest run.
+
+To leave the tested pgAdmin process open for the connected-only QA stage:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\setup-and-test.ps1 -KeepPgAdmin
+```
+
+After that run passes, connect the desired server manually inside the still-open
+pgAdmin window. Then run:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\run-connected-e2e.ps1
+```
+
+The connected runner attaches to the existing Chromium DevTools endpoint and
+checks Query Tool, Backup and Restore visually. It **does not execute SQL**, does
+not start a backup, and does not start a restore. If no server is already
+connected, it stops and asks for a manual connection instead of connecting by
+itself.
 
 If more than one pgAdmin installation is detected, pass the web directory:
 
