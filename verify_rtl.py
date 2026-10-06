@@ -75,6 +75,7 @@ def main() -> None:
     assert 'textarea[name="connection_string"]' in patched
     assert 'html[dir="rtl"] .dock-tab .drag-initiator' in patched
     assert 'html[dir="rtl"] .dock-tab .dock-tab-btn' in patched
+    assert 'html[dir="rtl"] .dock-tab .dock-tab-remove' in patched
     assert 'html[dir="rtl"] .dock-tab .dock-tab-close-btn' in patched
     assert 'margin-left: 8px !important' in patched
     assert 'margin-right: 0 !important' in patched
