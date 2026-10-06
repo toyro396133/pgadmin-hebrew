@@ -63,6 +63,7 @@ def main() -> None:
     assert 'html[dir="rtl"] .file-tree .file-entry' in patched
     assert '.file-entry.depth-2 { padding-right: 16px !important; }' in patched
     assert 'localizeDefaultServerGroup' in patched
+    assert '.Form-optionIcon.icon-server_group + span' in patched
     assert 'שרתים' in patched
     assert 'input[type="text"]' in patched
     assert "unicode-bidi: plaintext" in patched
