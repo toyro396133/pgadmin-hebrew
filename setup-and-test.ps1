@@ -102,17 +102,19 @@ if (Test-Path .\messages-v9.18.pot) {
   Write-Host 'Upstream POT file not present; offline REL-9_18 key-set fingerprint already verified.'
 }
 
-# Install Hebrew + RTL into the detected pgAdmin 9.18 tree.
-powershell -ExecutionPolicy Bypass -File .\install-hebrew.ps1 -WebPath $WebPath
-if ($LASTEXITCODE -ne 0) { throw 'Hebrew installation failed.' }
-
-# A clean Electron launch is required for DevTools/CDP attachment.
+# Close pgAdmin before touching files under Program Files. On Windows an active
+# Electron/Python process may hold translation/catalog files open.
 $running = Get-Process pgAdmin4 -ErrorAction SilentlyContinue
 if ($running) {
-  Write-Host 'Closing running pgAdmin4 processes for the UI test...'
+  Write-Host 'Closing running pgAdmin4 processes before installation...'
   $running | Stop-Process -Force
   Start-Sleep -Seconds 2
 }
+
+# Install Hebrew + RTL into the detected pgAdmin 9.18 tree. The wrapper
+# self-elevates only this installation step when Program Files requires it.
+powershell -ExecutionPolicy Bypass -File .\install-hebrew.ps1 -WebPath $WebPath -Python $VenvPython
+if ($LASTEXITCODE -ne 0) { throw 'Hebrew installation failed.' }
 
 if ($CdpPort -le 0) {
   $CdpPort = Get-FreeTcpPort
