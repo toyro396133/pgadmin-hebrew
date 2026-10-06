@@ -584,12 +584,25 @@ def main():
                     ],
                     **dialog_visual,
                 }
+                server_group_display = dialog.locator(
+                    ".Form-optionIcon.icon-server_group + span"
+                )
+                server_group_display_text = (
+                    server_group_display.first.inner_text().strip()
+                    if server_group_display.count() > 0
+                    else None
+                )
+                result["diagnostics"]["register_server_general"][
+                    "server_group_display"
+                ] = server_group_display_text
                 result["checks"]["register_server_dialog_rtl"] = {
                     "dialog_rtl": dialog_visual["direction"] == "rtl",
                     "hebrew_markers":
                         sum(1 for x in general_markers if x in dialog_text) >= 4,
                     "no_horizontal_overflow":
                         not dialog_visual["hasHorizontalOverflow"],
+                    "server_group_display_localized":
+                        server_group_display_text in (None, "שרתים"),
                 }
 
                 register_general_shot = shots / "04-register-server.png"
