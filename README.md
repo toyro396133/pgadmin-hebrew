@@ -108,24 +108,27 @@ Preferences/Register Server and the existing-server context menu, and commits +
 pushes the screenshots and JSON report. Screenshots from the previous run are
 deleted before capture, so Git always reflects the latest run.
 
-To leave the tested pgAdmin process open for the connected-only QA stage:
+The main runner now continues automatically into the connected QA stage after
+the base Hebrew/RTL checks pass. It connects the registered `PostgreSQL 18`
+server, and if pgAdmin requests a password the script waits while the user enters
+it in the pgAdmin password dialog. Once connected, it creates or reuses the
+dedicated `pgadmin_hebrew_e2e` database, connects to it, and checks Query Tool,
+Backup and Restore visually. Backup and Restore are opened for inspection only;
+their actions are never started.
+
+Use `-KeepPgAdmin` only when you want the tested desktop process to remain open
+after all base + connected tests finish:
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File .\setup-and-test.ps1 -KeepPgAdmin
 ```
 
-After that run passes, connect the desired server manually inside the still-open
-pgAdmin window. Then run:
+The connected stage can also be rerun against an already-running pgAdmin
+instance without reinstalling/restarting it:
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File .\run-connected-e2e.ps1
 ```
-
-The connected runner attaches to the existing Chromium DevTools endpoint and
-checks Query Tool, Backup and Restore visually. It **does not execute SQL**, does
-not start a backup, and does not start a restore. If no server is already
-connected, it stops and asks for a manual connection instead of connecting by
-itself.
 
 If more than one pgAdmin installation is detected, pass the web directory:
 
