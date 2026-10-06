@@ -78,6 +78,9 @@ def main() -> None:
     assert 'html[dir="rtl"] .dock-tab .dock-tab-close-btn' in patched
     assert 'margin-left: 8px !important' in patched
     assert 'margin-right: 0 !important' in patched
+    assert 'html[dir="rtl"] .dock-fbox .dock-nav' in patched
+    assert 'html[dir="rtl"] .dock-fbox .dock-extra-content' in patched
+    assert '.dock-extra-content .dock-tab-close-btn' in patched
     assert "PGADMIN_HEBREW_RUNTIME_START" in patched
     assert "replaceMenuOpen" in patched
     assert "decodeTechnicalMessageEntities" in patched
