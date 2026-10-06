@@ -39,8 +39,7 @@
     },
     "dock_tab_close_buttons": {
       "found": false,
-      "on_original_side": false,
-      "layout_ltr": false
+      "on_original_side": false
     },
     "more_menu_opened": true,
     "more_menu_localized": true,
@@ -70,8 +69,8 @@
       "hebrew_markers": true,
       "no_horizontal_overflow": true,
       "server_group_display_localized": true,
-      "close_button_found": false,
-      "close_button_on_original_side": false,
+      "close_button_found": true,
+      "close_button_on_original_side": true,
       "close_layout_ltr": true,
       "tab_title_rtl": true
     },
@@ -108,19 +107,19 @@
   ],
   "errors": [],
   "diagnostics": {
-    "cdp": "http://127.0.0.1:49882",
+    "cdp": "http://127.0.0.1:63126",
     "observed_urls": [
-      "http://127.0.0.1:53169/browser/"
+      "http://127.0.0.1:63128/browser/"
     ],
     "targets": [
       {
         "context": 0,
         "page": 0,
-        "url": "http://127.0.0.1:53169/browser/",
+        "url": "http://127.0.0.1:63128/browser/",
         "closed": false
       }
     ],
-    "selected_url": "http://127.0.0.1:53169/browser/",
+    "selected_url": "http://127.0.0.1:63128/browser/",
     "language_reload_needed": true,
     "language_reload_recovery": {
       "triggered": false
@@ -208,11 +207,15 @@
       "direction": "rtl",
       "textAlign": "start",
       "hasHorizontalOverflow": false,
-      "closeButtonFound": false,
-      "closeButtonOnRight": false,
+      "closeButtonFound": true,
+      "closeButtonOnRight": true,
       "closeLayoutDirection": "ltr",
       "tabTitleDirection": "rtl",
-      "closeButtonRect": null,
+      "closeButtonRect": {
+        "left": 802.5,
+        "right": 834.5,
+        "width": 32
+      },
       "extraRect": {
         "left": 802.5,
         "right": 834.5,
@@ -318,5 +321,5 @@
       }
     }
   },
-  "timestamp": "2026-10-06T07:27:54+0300"
+  "timestamp": "2026-10-06T07:45:16+0300"
 }
