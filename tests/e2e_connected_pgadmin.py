@@ -67,6 +67,7 @@ def wait_for_query_frame(page, timeout_s=30):
 def close_float_dialog(page):
     close = first_visible(
         page.locator(
+            '.dock-fbox .dock-extra-content .dock-tab-close-btn, '
             '.dock-fbox button[data-label="סגירה"], '
             '.dock-fbox button[data-label="Close"]'
         )
