@@ -35,14 +35,47 @@
 ## RTL
 
 - נוסף RTL סמנטי לעברית באמצעות `dir="rtl"` ב־`base.html`.
-- CodeMirror, xterm, `pre/code`, קלטים טכניים מרכזיים ו־React Data Grid מוחזרים ל־LTR בכוונה.
-- `verify_rtl.py` עבר: SHA של fixture upstream, Jinja parse, idempotency ו־install/restore smoke test.
-- נוסף installer אוטומטי עם גיבוי ושחזור.
+- CodeMirror, xterm, `pre/code`, שדות חיבור/נתיבים טכניים ו־React Data Grid מוחזרים ל־LTR בכוונה.
+- נוספה שכבת RTL חזותית ל־Preferences, Object Explorer, תפריטים, טפסים ו־rc-dock dialogs.
+- תוויות תצוגה קשיחות של pgAdmin כגון `Open` ו־`Servers` מותאמות לעברית בזמן ריצה בלי לשנות ערכים שמורים.
+- `verify_rtl.py` עבר: SHA של fixture upstream, Jinja parse, LF/CRLF, idempotency, שדרוג RTL/runtime ו־install/restore smoke test.
+- נוסף installer אוטומטי עם גיבוי ושחזור, כולל self-elevation ב־Windows כאשר pgAdmin מותקן תחת `Program Files`.
+
+## QA חזותי / E2E בפועל
+
+ה־E2E האמיתי מול pgAdmin Desktop 9.18 עבר בהצלחה ב־2026-10-06 ומכסה כרגע:
+
+- טעינת עברית דרך Preferences API.
+- `html lang="he"`, `dir="rtl"` ו־RTL מחושב של הגוף.
+- Dashboard וטאבים מרכזיים בעברית.
+- Object Explorer ב־RTL, כולל תצוגת קבוצת ברירת המחדל כ־**שרתים**.
+- תפריט `⋮` ותפריטי הקשר ב־RTL.
+- Preferences, כולל divider נכון, גלילה אופקית מוסתרת וטקסטי עזרה.
+- חלון **רישום שרת** וכרטיסיית **חיבור**.
+- Host / Port / DB / Username / Password / Service ב־LTR.
+- תפריט ההקשר של השרת הקיים `PostgreSQL 18`.
+- בדיקה מפורשת שמצב החיבור של שרת מנותק נשאר ללא שינוי במהלך האודיט.
+- שמירת screenshots ודוח JSON בכל סבב, וניקוי artifacts קודמים לפני הסבב הבא.
+
+בסבב המאומת האחרון:
+
+- `ui_ready.bodyTextLength = 451`
+- `ui_ready.treeRows = 1`
+- `server_inventory_loaded = true`
+- `PostgreSQL 18` זוהה כ־`connected: false`
+- `server_connection_state_preserved = true`
+- סטטוס E2E כולל: **passed**
 
 ## מה עדיין אינו “סגור” לחלוטין
 
-**100% כיסוי מחרוזות + RTL baseline אינם עדיין 100% QA חזותי.** נדרש סבב בדיקות UI בתוך pgAdmin עצמו כדי למצוא רכיבי MUI עם margins/icons פיזיים, חיתוך טקסט, רוחבי כפתורים ושדות `text` טכניים. תיקונים כאלה יבוצעו נקודתית לאחר בדיקה במסך, בלי לסכן את Query Tool ו־PSQL.
+תרחישים שתלויים בשרת/מסד **שכבר מחוברים מראש** עדיין אינם מכוסים אוטומטית בסבב הבטוח:
 
+- Query Tool.
+- Backup.
+- Restore.
+- תרחישים עמוקים יותר בתוך מסדי נתונים, סכימות, טבלאות וגרידים.
+
+ה־E2E לא מחבר שרת מנותק מאחורי הקלעים רק כדי להשיג כיסוי. כאשר יש שרת שכבר מחובר לפני הריצה, אפשר להרחיב את שכבת הבדיקות הזו בלי לשנות מצב חיבור או נתוני משתמש.
 
 ## שחזוריות
 
