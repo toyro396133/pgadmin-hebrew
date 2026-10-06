@@ -952,6 +952,8 @@ def main():
                 # Explicitly close. Never submit/save the server form.
                 try:
                     close_btn = page.locator(
+                        '.dock-fbox .dock-extra-content '
+                        '.dock-tab-close-btn, '
                         '.dock-fbox button[data-label="סגירה"], '
                         '.dock-fbox button[data-label="Close"]'
                     )
