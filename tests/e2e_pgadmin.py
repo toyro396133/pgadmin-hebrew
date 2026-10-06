@@ -436,7 +436,6 @@ def main():
             result["checks"]["dock_tab_close_buttons"] = {
                 "found": dock_tab_closes["count"] > 0,
                 "on_original_side": dock_tab_closes["allOnRight"],
-                "layout_ltr": dock_tab_closes["allLayoutLtr"],
             }
 
             main_shot = shots / "00-main.png"
