@@ -6,7 +6,9 @@ import json
 import sys
 import time
 from pathlib import Path
+from urllib.error import URLError
 from urllib.parse import urlsplit
+from urllib.request import urlopen
 
 from playwright.sync_api import Error as PlaywrightError
 from playwright.sync_api import TimeoutError as PlaywrightTimeoutError
@@ -100,6 +102,32 @@ def wait_for_stable_pgadmin_page(browser, timeout_ms: int = 90000):
     )
 
 
+def wait_for_cdp_endpoint(cdp: str, timeout_s: float = 30.0) -> bool:
+    deadline = time.monotonic() + timeout_s
+    url = cdp.rstrip("/") + "/json/version"
+    while time.monotonic() < deadline:
+        try:
+            with urlopen(url, timeout=2) as resp:
+                if 200 <= resp.status < 300:
+                    return True
+        except (URLError, OSError):
+            pass
+        time.sleep(0.5)
+    return False
+
+
+def reconnect_pgadmin(p, cdp: str, timeout_ms: int = 60000):
+    if not wait_for_cdp_endpoint(cdp, timeout_s=30):
+        raise RuntimeError(
+            f"Chromium DevTools did not recover at {cdp} after page reload"
+        )
+    browser = p.chromium.connect_over_cdp(cdp)
+    page, observed, targets = wait_for_stable_pgadmin_page(
+        browser, timeout_ms=timeout_ms
+    )
+    return browser, page, observed, targets
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--cdp", default="http://127.0.0.1:9222")
@@ -182,9 +210,81 @@ def main():
             except PlaywrightError:
                 page.evaluate("document.cookie='PGADMIN_LANGUAGE=he; path=/'")
 
-            # Reload the already-stable main window so Flask/Babel sees the saved
-            # desktop preference and the template receives the Hebrew language.
-            page.reload(wait_until="domcontentloaded", timeout=60000)
+            # Reload only when the server-rendered document still needs the
+            # Hebrew lang/dir attributes. Electron/CDP can occasionally replace
+            # or drop the main target during reload, so recover by reconnecting
+            # to the stable pgAdmin HTTP target instead of failing the whole run.
+            needs_reload = page.evaluate(
+                """() => (
+                  document.documentElement.lang !== 'he'
+                  || document.documentElement.dir !== 'rtl'
+                )"""
+            )
+            result["diagnostics"]["language_reload_needed"] = needs_reload
+
+            if needs_reload:
+                try:
+                    page.reload(
+                        wait_until="domcontentloaded", timeout=60000
+                    )
+                except PlaywrightError as exc:
+                    result["diagnostics"]["language_reload_recovery"] = {
+                        "triggered": True,
+                        "error": str(exc),
+                    }
+                    browser, page, recovered_observed, recovered_targets = (
+                        reconnect_pgadmin(p, args.cdp)
+                    )
+                    result["diagnostics"][
+                        "reload_recovered_observed_urls"
+                    ] = recovered_observed
+                    result["diagnostics"][
+                        "reload_recovered_targets"
+                    ] = recovered_targets
+                    result["diagnostics"][
+                        "selected_url_after_recovery"
+                    ] = page.url
+
+                    # A replacement BrowserWindow may have a fresh context.
+                    parts = urlsplit(page.url)
+                    recovered_origin = (
+                        f"{parts.scheme}://{parts.netloc}"
+                    )
+                    try:
+                        page.context.add_cookies(
+                            [{
+                                "name": "PGADMIN_LANGUAGE",
+                                "value": "he",
+                                "url": recovered_origin,
+                            }]
+                        )
+                    except PlaywrightError:
+                        page.evaluate(
+                            "document.cookie="
+                            "'PGADMIN_LANGUAGE=he; path=/'"
+                        )
+
+                    recovered_ready = page.evaluate(
+                        """() => (
+                          document.documentElement.lang === 'he'
+                          && document.documentElement.dir === 'rtl'
+                        )"""
+                    )
+                    if not recovered_ready:
+                        page.reload(
+                            wait_until="domcontentloaded",
+                            timeout=60000,
+                        )
+                else:
+                    result["diagnostics"][
+                        "language_reload_recovery"
+                    ] = {"triggered": False}
+            else:
+                result["diagnostics"]["language_reload_recovery"] = {
+                    "triggered": False,
+                    "skipped_reload": True,
+                }
+
             page.wait_for_selector("body", timeout=60000)
             page.wait_for_function(
                 "() => window.pgAdmin && window.pgAdmin.csrf_token",
