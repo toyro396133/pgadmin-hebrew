@@ -1,5 +1,5 @@
 {
-  "status": "failed",
+  "status": "passed",
   "checks": {
     "language_preference_api": {
       "ok": true,
@@ -55,13 +55,20 @@
       "no_page_horizontal_overflow": true
     },
     "server_group_context_menu_rtl": {
-      "menu_found": false
+      "menu_found": true,
+      "menu_rtl": true,
+      "has_items": true,
+      "has_hebrew_items": true
     },
     "register_server_dialog_rtl": {
-      "dialog_rtl": false
+      "dialog_rtl": true,
+      "hebrew_markers": true,
+      "no_horizontal_overflow": true
     },
     "register_server_connection_form": {
-      "hebrew_markers": false
+      "hebrew_markers": true,
+      "technical_fields_found": true,
+      "technical_fields_ltr": true
     },
     "connected_database_scenarios": {
       "status": "skipped",
@@ -71,26 +78,26 @@
   "screenshots": [
     "artifacts\\screenshots\\00-main.png",
     "artifacts\\screenshots\\01-more-menu.png",
-    "artifacts\\screenshots\\02-preferences.png"
+    "artifacts\\screenshots\\02-preferences.png",
+    "artifacts\\screenshots\\03-object-context-menu.png",
+    "artifacts\\screenshots\\04-register-server.png",
+    "artifacts\\screenshots\\05-register-server-connection.png"
   ],
-  "errors": [
-    "Server-group context menu: Page.wait_for_selector: Timeout 10000ms exceeded.\nCall log:\n  - waiting for locator(\"[role=\\\"menu\\\"]\") to be visible\n    23 × locator resolved to 5 elements. Proceeding with the first one: <ul role=\"menu\" tabindex=\"-1\" data-state=\"closed\" aria-label=\"Layout Context Menu\" class=\"szh-menu szh-menu--state-closed szh-menu--align-start szh-menu--dir-bottom\">…</ul>\n",
-    "Register Server dialog: Locator.wait_for: Timeout 15000ms exceeded.\nCall log:\n  - waiting for locator(\".MuiDialog-root\").last to be visible\n"
-  ],
+  "errors": [],
   "diagnostics": {
-    "cdp": "http://127.0.0.1:55371",
+    "cdp": "http://127.0.0.1:63420",
     "observed_urls": [
-      "http://127.0.0.1:55373/browser/"
+      "http://127.0.0.1:63422/browser/"
     ],
     "targets": [
       {
         "context": 0,
         "page": 0,
-        "url": "http://127.0.0.1:55373/browser/",
+        "url": "http://127.0.0.1:63422/browser/",
         "closed": false
       }
     ],
-    "selected_url": "http://127.0.0.1:55373/browser/",
+    "selected_url": "http://127.0.0.1:63422/browser/",
     "object_explorer_rtl": {
       "found": true,
       "label": "שרתים",
@@ -139,6 +146,72 @@
       ],
       "pageHasHorizontalOverflow": false
     },
+    "server_group_context_menu": {
+      "items": [
+        "רישום",
+        "יצירה",
+        "רענון...\nF5",
+        "מאפיינים...\nAlt + Shift + E"
+      ],
+      "found": true,
+      "direction": "rtl",
+      "textAlign": "start",
+      "ariaLabel": "Object Context Menu",
+      "state": "open"
+    },
+    "register_server_general": {
+      "markers_found": [
+        "רישום",
+        "שרת",
+        "כללי",
+        "שם",
+        "חיבור"
+      ],
+      "direction": "rtl",
+      "textAlign": "start",
+      "hasHorizontalOverflow": false
+    },
+    "register_server_connection": {
+      "markers_found": [
+        "שם/כתובת מארח",
+        "יציאה",
+        "מסד נתונים לתחזוקה",
+        "שם משתמש",
+        "סיסמה"
+      ],
+      "technical_fields": {
+        "host": {
+          "direction": "ltr",
+          "textAlign": "left",
+          "type": "text"
+        },
+        "port": {
+          "direction": "ltr",
+          "textAlign": "left",
+          "type": "tel"
+        },
+        "db": {
+          "direction": "ltr",
+          "textAlign": "left",
+          "type": "text"
+        },
+        "username": {
+          "direction": "ltr",
+          "textAlign": "left",
+          "type": "text"
+        },
+        "password": {
+          "direction": "ltr",
+          "textAlign": "left",
+          "type": "password"
+        },
+        "service": {
+          "direction": "ltr",
+          "textAlign": "left",
+          "type": "text"
+        }
+      }
+    },
     "server_inventory": [
       {
         "label": "PostgreSQL 18",
@@ -147,5 +220,5 @@
       }
     ]
   },
-  "timestamp": "2026-10-06T04:42:24+0300"
+  "timestamp": "2026-10-06T04:53:38+0300"
 }
