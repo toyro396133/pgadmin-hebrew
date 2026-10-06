@@ -63,7 +63,8 @@
     "register_server_dialog_rtl": {
       "dialog_rtl": true,
       "hebrew_markers": true,
-      "no_horizontal_overflow": true
+      "no_horizontal_overflow": true,
+      "server_group_display_localized": true
     },
     "register_server_connection_form": {
       "hebrew_markers": true,
@@ -73,6 +74,19 @@
     "connected_database_scenarios": {
       "status": "skipped",
       "reason": "No already-connected server detected; no connection was attempted."
+    },
+    "existing_server_context_menu_rtl": {
+      "status": "checked",
+      "menu_rtl": true,
+      "has_properties": true,
+      "has_connect_action": true
+    },
+    "existing_server_properties_rtl": {
+      "status": "checked",
+      "panel_rtl": true,
+      "hebrew_tabs": true,
+      "no_horizontal_overflow": true,
+      "technical_fields_ltr": true
     }
   },
   "screenshots": [
@@ -81,23 +95,25 @@
     "artifacts\\screenshots\\02-preferences.png",
     "artifacts\\screenshots\\03-object-context-menu.png",
     "artifacts\\screenshots\\04-register-server.png",
-    "artifacts\\screenshots\\05-register-server-connection.png"
+    "artifacts\\screenshots\\05-register-server-connection.png",
+    "artifacts\\screenshots\\06-server-context-menu.png",
+    "artifacts\\screenshots\\07-server-properties.png"
   ],
   "errors": [],
   "diagnostics": {
-    "cdp": "http://127.0.0.1:63420",
+    "cdp": "http://127.0.0.1:56286",
     "observed_urls": [
-      "http://127.0.0.1:63422/browser/"
+      "http://127.0.0.1:56288/browser/"
     ],
     "targets": [
       {
         "context": 0,
         "page": 0,
-        "url": "http://127.0.0.1:63422/browser/",
+        "url": "http://127.0.0.1:56288/browser/",
         "closed": false
       }
     ],
-    "selected_url": "http://127.0.0.1:63422/browser/",
+    "selected_url": "http://127.0.0.1:56288/browser/",
     "object_explorer_rtl": {
       "found": true,
       "label": "שרתים",
@@ -169,7 +185,8 @@
       ],
       "direction": "rtl",
       "textAlign": "start",
-      "hasHorizontalOverflow": false
+      "hasHorizontalOverflow": false,
+      "server_group_display": "שרתים"
     },
     "register_server_connection": {
       "markers_found": [
@@ -218,7 +235,57 @@
         "iconClass": "file-icon icon-server-not-connected",
         "connected": false
       }
-    ]
+    ],
+    "existing_server_context_menu": {
+      "server": "PostgreSQL 18",
+      "items": [
+        "רישום",
+        "רענון...\nF5",
+        "העתקת שרת...",
+        "חיבור שרת",
+        "הסרת שרת\nAlt + Shift + D",
+        "מאפיינים...\nAlt + Shift + E"
+      ],
+      "direction": "rtl",
+      "textAlign": "start"
+    },
+    "existing_server_properties": {
+      "server": "PostgreSQL 18",
+      "markers_found": [
+        "כללי",
+        "חיבור",
+        "מתקדם"
+      ],
+      "technical_fields": {
+        "host": {
+          "direction": "ltr",
+          "textAlign": "left"
+        },
+        "port": {
+          "direction": "ltr",
+          "textAlign": "left"
+        },
+        "db": {
+          "direction": "ltr",
+          "textAlign": "left"
+        },
+        "username": {
+          "direction": "ltr",
+          "textAlign": "left"
+        },
+        "password": {
+          "direction": "ltr",
+          "textAlign": "left"
+        },
+        "service": {
+          "direction": "ltr",
+          "textAlign": "left"
+        }
+      },
+      "direction": "rtl",
+      "textAlign": "start",
+      "hasHorizontalOverflow": false
+    }
   },
-  "timestamp": "2026-10-06T04:53:38+0300"
+  "timestamp": "2026-10-06T05:12:42+0300"
 }
