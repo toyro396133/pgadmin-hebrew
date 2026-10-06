@@ -215,14 +215,12 @@ def main():
                 result["status"] = "needs_connection"
                 result["checks"]["connected_server_available"] = False
                 result["errors"].append(inventory.get("reason"))
-                browser.close()
                 raise SystemExit(2)
 
             if not inventory.get("database"):
                 result["checks"]["connected_server_available"] = True
                 result["checks"]["database_available"] = False
                 result["errors"].append(inventory.get("reason"))
-                browser.close()
                 raise SystemExit(1)
 
             result["checks"]["connected_server_available"] = True
@@ -411,9 +409,9 @@ def main():
             ]
             result["status"] = "passed" if all(required) else "failed"
 
-            # Closing the browser object only disconnects Playwright from CDP;
-            # it does not terminate the Electron process.
-            browser.close()
+            # Leave the externally launched Electron/pgAdmin process alive.
+            # Exiting the Playwright session disconnects from CDP without
+            # intentionally closing the application.
 
     except SystemExit as exc:
         code = int(exc.code or 0)
