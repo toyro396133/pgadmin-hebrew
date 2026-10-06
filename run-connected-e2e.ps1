@@ -55,7 +55,7 @@ Write-Host "This run never executes SQL, Backup, or Restore actions."
 $exitCode = $LASTEXITCODE
 
 if (-not $NoPush) {
-  git add -A -- artifacts/connected-e2e-report.json artifacts/screenshots/08-connected-database-tree.png artifacts/screenshots/09-query-tool.png artifacts/screenshots/10-backup-dialog.png artifacts/screenshots/11-restore-dialog.png
+  git add -A -- artifacts
 
   $changes = git status --porcelain -- artifacts
   if ($changes) {
