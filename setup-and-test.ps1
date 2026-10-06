@@ -77,6 +77,7 @@ $Screens = Join-Path $Artifacts 'screenshots'
 New-Item -ItemType Directory -Force -Path $Screens | Out-Null
 Get-ChildItem $Screens -File -ErrorAction SilentlyContinue | Remove-Item -Force
 Remove-Item (Join-Path $Artifacts 'e2e-report.json') -Force -ErrorAction SilentlyContinue
+Remove-Item (Join-Path $Artifacts 'connected-e2e-report.json') -Force -ErrorAction SilentlyContinue
 
 # Keep Python dependencies isolated from the user's global Python installation.
 $Venv = Join-Path $Root '.venv'
@@ -177,9 +178,31 @@ if (-not $webTargetReady) {
 }
 
 $exitCode = 0
+$failedStage = ''
 try {
+  Write-Host 'Running base Hebrew/RTL E2E...'
   & $VenvPython .\tests\e2e_pgadmin.py --cdp $cdp --screenshots .\artifacts\screenshots --report .\artifacts\e2e-report.json
-  $exitCode = $LASTEXITCODE
+  $baseExitCode = $LASTEXITCODE
+
+  if ($baseExitCode -ne 0) {
+    $exitCode = $baseExitCode
+    $failedStage = 'Base'
+  } else {
+    Write-Host ''
+    Write-Host 'Base E2E passed. Starting connected database E2E...' -ForegroundColor Cyan
+    Write-Host 'The runner will connect PostgreSQL 18 automatically.'
+    Write-Host 'If pgAdmin asks for a password, enter it in the pgAdmin window.'
+    Write-Host 'The terminal will wait and continue automatically after the connection succeeds.'
+    Write-Host 'Test database: pgadmin_hebrew_e2e'
+
+    & $VenvPython .\tests\e2e_connected_pgadmin.py --cdp $cdp --database pgadmin_hebrew_e2e --password-wait-seconds 900 --screenshots .\artifacts\screenshots --report .\artifacts\connected-e2e-report.json
+    $connectedExitCode = $LASTEXITCODE
+
+    if ($connectedExitCode -ne 0) {
+      $exitCode = $connectedExitCode
+      $failedStage = 'Connected'
+    }
+  }
 } finally {
   if (-not $KeepPgAdmin -and -not $proc.HasExited) {
     Stop-Process -Id $proc.Id -Force -ErrorAction SilentlyContinue
@@ -202,6 +225,6 @@ if (-not $NoPush) {
 }
 
 if ($exitCode -ne 0) {
-  throw "E2E test failed (exit $exitCode). Screenshots/report were preserved and pushed."
+  throw "$failedStage E2E failed (exit $exitCode). Screenshots/report were preserved and pushed."
 }
-Write-Host 'ALL TESTS PASSED.' -ForegroundColor Green
+Write-Host 'ALL BASE + CONNECTED TESTS PASSED.' -ForegroundColor Green
