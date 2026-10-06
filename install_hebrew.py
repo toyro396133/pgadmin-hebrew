@@ -228,17 +228,20 @@ RTL_BLOCK = """
 
         /* rc-dock close buttons are controls, not RTL content. Keep their
          * original physical side while Hebrew tab titles themselves stay RTL. */
-        html[dir="rtl"] .dock-tab .drag-initiator {
+        html[dir="rtl"] .dock-tab {
           direction: ltr !important;
         }
 
+        html[dir="rtl"] .dock-tab .drag-initiator,
         html[dir="rtl"] .dock-tab .dock-tab-btn {
           direction: rtl !important;
           text-align: right;
           unicode-bidi: isolate;
         }
 
+        html[dir="rtl"] .dock-tab .dock-tab-remove,
         html[dir="rtl"] .dock-tab .dock-tab-close-btn {
+          direction: ltr !important;
           margin-left: 8px !important;
           margin-right: 0 !important;
         }
