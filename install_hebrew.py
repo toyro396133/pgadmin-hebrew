@@ -226,6 +226,23 @@ RTL_BLOCK = """
           transform-origin: center;
         }
 
+        /* rc-dock tab close buttons are controls, not RTL content. Keep their
+         * original visual side while the Hebrew tab title itself stays RTL. */
+        html[dir="rtl"] .dock-tab .drag-initiator {
+          direction: ltr !important;
+        }
+
+        html[dir="rtl"] .dock-tab .dock-tab-btn {
+          direction: rtl !important;
+          text-align: right;
+          unicode-bidi: isolate;
+        }
+
+        html[dir="rtl"] .dock-tab .dock-tab-close-btn {
+          margin-left: 8px !important;
+          margin-right: 0 !important;
+        }
+
         html[dir="rtl"] .cm-editor,
         html[dir="rtl"] .cm-editor .cm-scroller,
         html[dir="rtl"] .cm-editor .cm-content,
