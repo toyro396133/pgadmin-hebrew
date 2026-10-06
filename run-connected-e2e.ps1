@@ -39,19 +39,23 @@ New-Item -ItemType Directory -Force -Path $Screens | Out-Null
 $ConnectedReport = Join-Path $Artifacts "connected-e2e-report.json"
 Remove-Item $ConnectedReport -Force -ErrorAction SilentlyContinue
 @(
-  "08-connected-database-tree.png",
-  "09-query-tool.png",
-  "10-backup-dialog.png",
-  "11-restore-dialog.png"
+  "08-create-database.png",
+  "09-connected-database-tree.png",
+  "10-query-tool.png",
+  "11-backup-dialog.png",
+  "12-restore-dialog.png"
 ) | ForEach-Object {
   Remove-Item (Join-Path $Screens $_) -Force -ErrorAction SilentlyContinue
 }
 
 Write-Host "Connected pgAdmin E2E"
 Write-Host "CDP: $Cdp"
-Write-Host "This run never executes SQL, Backup, or Restore actions."
+Write-Host "The runner will connect the registered PostgreSQL server automatically."
+Write-Host "If pgAdmin asks for a password, enter it in the pgAdmin window; the runner will wait."
+Write-Host "It will create/reuse database: pgadmin_hebrew_e2e"
+Write-Host "It does not execute user SQL and never starts Backup or Restore."
 
-& $VenvPython .\tests\e2e_connected_pgadmin.py --cdp $Cdp --screenshots .\artifacts\screenshots --report .\artifacts\connected-e2e-report.json
+& $VenvPython .\tests\e2e_connected_pgadmin.py --cdp $Cdp --database pgadmin_hebrew_e2e --password-wait-seconds 900 --screenshots .\artifacts\screenshots --report .\artifacts\connected-e2e-report.json
 $exitCode = $LASTEXITCODE
 
 if (-not $NoPush) {
@@ -70,9 +74,6 @@ if (-not $NoPush) {
   }
 }
 
-if ($exitCode -eq 2) {
-  throw "No already-connected server was found. Leave pgAdmin open, connect PostgreSQL 18 manually, then run this script again."
-}
 if ($exitCode -ne 0) {
   throw "Connected E2E failed (exit $exitCode). The report/screenshots were preserved and pushed."
 }
