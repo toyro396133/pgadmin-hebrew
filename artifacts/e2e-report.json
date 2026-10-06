@@ -95,22 +95,22 @@
     "artifacts\\screenshots\\05-register-server-connection.png"
   ],
   "errors": [
-    "Existing server non-destructive audit: Locator.get_attribute: Timeout 30000ms exceeded.\nCall log:\n  - waiting for locator(\".file-tree .file-entry .file-name\").filter(has_text=\"PostgreSQL 18\").first.locator(\"xpath=ancestor::div[contains(@class,\\\"file-entry\\\")][1]\").locator(\".file-icon\").first\n"
+    "Existing server non-destructive audit: Page.evaluate: TypeError: Object not a valid FileEntry\n    at Object.ensureVisible (http://127.0.0.1:61587/static/js/generated/vendor.others.js?ver=91800:109:924215)\n    at async t.Tree.ensureVisible (http://127.0.0.1:61587/static/js/generated/app.bundle.js?ver=91800:2:1781018)\n    at async eval (eval at evaluate (:311:30), <anonymous>:15:27)\n    at async <anonymous>:337:30"
   ],
   "diagnostics": {
-    "cdp": "http://127.0.0.1:51017",
+    "cdp": "http://127.0.0.1:61585",
     "observed_urls": [
-      "http://127.0.0.1:51019/browser/"
+      "http://127.0.0.1:61587/browser/"
     ],
     "targets": [
       {
         "context": 0,
         "page": 0,
-        "url": "http://127.0.0.1:51019/browser/",
+        "url": "http://127.0.0.1:61587/browser/",
         "closed": false
       }
     ],
-    "selected_url": "http://127.0.0.1:51019/browser/",
+    "selected_url": "http://127.0.0.1:61587/browser/",
     "language_reload_needed": true,
     "language_reload_recovery": {
       "triggered": false
@@ -240,5 +240,5 @@
       }
     ]
   },
-  "timestamp": "2026-10-06T06:14:55+0300"
+  "timestamp": "2026-10-06T06:25:45+0300"
 }
