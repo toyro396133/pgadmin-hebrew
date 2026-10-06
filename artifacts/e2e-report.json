@@ -1,5 +1,5 @@
 {
-  "status": "passed",
+  "status": "failed",
   "checks": {
     "language_preference_api": {
       "ok": true,
@@ -64,7 +64,10 @@
       "dialog_rtl": true,
       "hebrew_markers": true,
       "no_horizontal_overflow": true,
-      "server_group_display_localized": true
+      "server_group_display_localized": true,
+      "close_button_found": false,
+      "close_button_on_original_side": false,
+      "close_layout_ltr": true
     },
     "register_server_connection_form": {
       "hebrew_markers": true,
@@ -99,19 +102,19 @@
   ],
   "errors": [],
   "diagnostics": {
-    "cdp": "http://127.0.0.1:53169",
+    "cdp": "http://127.0.0.1:52534",
     "observed_urls": [
-      "http://127.0.0.1:54188/browser/"
+      "http://127.0.0.1:55804/browser/"
     ],
     "targets": [
       {
         "context": 0,
         "page": 0,
-        "url": "http://127.0.0.1:54188/browser/",
+        "url": "http://127.0.0.1:55804/browser/",
         "closed": false
       }
     ],
-    "selected_url": "http://127.0.0.1:54188/browser/",
+    "selected_url": "http://127.0.0.1:55804/browser/",
     "language_reload_needed": true,
     "language_reload_recovery": {
       "triggered": false
@@ -193,6 +196,15 @@
       "direction": "rtl",
       "textAlign": "start",
       "hasHorizontalOverflow": false,
+      "closeButtonFound": false,
+      "closeButtonOnRight": false,
+      "closeInitiatorDirection": "ltr",
+      "closeButtonRect": null,
+      "initiatorRect": {
+        "left": 724.09375,
+        "right": 826.5,
+        "width": 102.40625
+      },
       "server_group_display": "שרתים"
     },
     "register_server_connection": {
@@ -283,5 +295,5 @@
       }
     }
   },
-  "timestamp": "2026-10-06T07:03:23+0300"
+  "timestamp": "2026-10-06T07:18:00+0300"
 }
