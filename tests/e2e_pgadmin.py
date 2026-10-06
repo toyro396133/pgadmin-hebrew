@@ -727,47 +727,53 @@ def main():
                     except PlaywrightError:
                         pass
 
-            # Discover existing server capabilities without creating or
-            # connecting anything. Connected-only scenarios are reported as
-            # available/skipped for the next E2E layer.
+            # Discover existing server capabilities from pgAdmin's own
+            # tree model instead of racing the virtualized DOM. Opening a
+            # server-group is safe and only loads child nodes; we never open a
+            # server node here, so disconnected servers stay disconnected.
             try:
-                server_group_icon = page.locator(
-                    '.file-tree .file-entry .file-icon.icon-server_group'
-                ).first
-                server_group_row = server_group_icon.locator(
-                    'xpath=ancestor::div[contains(@class,"file-entry")][1]'
-                )
-                toggle = server_group_row.locator("i.directory-toggle")
-                if toggle.count() > 0:
-                    classes = toggle.first.get_attribute("class") or ""
-                    if "open" not in classes:
-                        toggle.first.click(timeout=10000)
-                        page.wait_for_timeout(1200)
-
                 server_inventory = page.evaluate(
-                    """() => Array.from(
-                      document.querySelectorAll('.file-tree .file-entry')
-                    ).map((row) => {
-                      const icon = row.querySelector(
-                        '.file-icon.icon-server, '
-                        + '.file-icon.icon-server-not-connected, '
-                        + '.file-icon.icon-shared-server-not-connected'
-                      );
-                      if (!icon) return null;
-                      return {
-                        label:
-                          row.querySelector('.file-name')?.textContent?.trim()
-                          || '',
-                        iconClass: icon.className,
-                        connected:
-                          icon.classList.contains('icon-server')
-                          && !icon.classList.contains(
-                            'icon-server-not-connected'
-                          ),
-                      };
-                    }).filter(Boolean)"""
+                    """async () => {
+                      const tree = window.pgAdmin?.Browser?.tree;
+                      if (!tree) {
+                        throw new Error('pgAdmin Browser tree is unavailable');
+                      }
+
+                      const roots = tree.children() || [];
+                      const groups = roots.filter((item) => {
+                        const data = tree.itemData(item) || {};
+                        return data._type === 'server_group';
+                      });
+
+                      const servers = [];
+                      for (const group of groups) {
+                        if (tree.isClosed(group)) {
+                          await tree.open(group);
+                        }
+                        await tree.ensureLoaded(group);
+
+                        for (const item of tree.children(group) || []) {
+                          const data = tree.itemData(item) || {};
+                          if (data._type !== 'server') continue;
+
+                          servers.push({
+                            id: data._id ?? data.id ?? null,
+                            label:
+                              data._label
+                              ?? data.label
+                              ?? item.fileName
+                              ?? '',
+                            iconClass: data.icon || '',
+                            connected: Boolean(data.connected),
+                            path: item.path || null,
+                          });
+                        }
+                      }
+                      return servers;
+                    }"""
                 )
                 result["diagnostics"]["server_inventory"] = server_inventory
+                result["checks"]["server_inventory_loaded"] = True
                 result["checks"]["connected_database_scenarios"] = {
                     "status": (
                         "available"
@@ -777,14 +783,21 @@ def main():
                     "reason": (
                         None
                         if any(x.get("connected") for x in server_inventory)
-                        else "No already-connected server detected; no connection was attempted."
+                        else (
+                            "No already-connected server detected; "
+                            "no connection was attempted."
+                        )
                     ),
                 }
             except Exception as exc:
                 result["diagnostics"]["server_inventory_error"] = str(exc)
+                result["checks"]["server_inventory_loaded"] = False
                 result["checks"]["connected_database_scenarios"] = {
                     "status": "skipped",
-                    "reason": f"Inventory failed without mutating state: {exc}",
+                    "reason": (
+                        "Inventory failed without mutating state: "
+                        f"{exc}"
+                    ),
                 }
 
             # Inspect an existing server without connecting to it or changing
@@ -1127,6 +1140,7 @@ def main():
                 result["checks"].get(
                     "server_connection_state_preserved", False
                 ),
+                result["checks"].get("server_inventory_loaded", False),
             ]
             result["status"] = "passed" if all(required) else "failed"
             browser.close()
