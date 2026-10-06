@@ -901,34 +901,112 @@ def main():
                 }
 
             # Inspect an existing server without connecting to it or changing
-            # connection state. Context menu is always safe. Properties are
-            # opened only when the server was already connected before this
-            # audit, because pgAdmin may establish a connection while opening
-            # properties for a disconnected server.
+            # connection state. Work from pgAdmin's tree model/path so the
+            # audit is not dependent on whether React's virtualized tree has
+            # already rendered the server row.
             server_inventory = result["diagnostics"].get(
                 "server_inventory", []
             )
             if server_inventory:
                 server_info = server_inventory[0]
                 server_label = server_info.get("label") or ""
+                server_path = server_info.get("path")
                 initially_connected = bool(server_info.get("connected"))
                 properties_opened = False
-                server_row = None
+
+                def dispatch_server_context_menu():
+                    return page.evaluate(
+                        """async ({path}) => {
+                          const tree = window.pgAdmin?.Browser?.tree;
+                          if (!tree) {
+                            throw new Error(
+                              'pgAdmin Browser tree is unavailable'
+                            );
+                          }
+                          const item = tree.findNode(path);
+                          if (!item) {
+                            throw new Error(
+                              'Server tree node not found: ' + path
+                            );
+                          }
+
+                          await tree.ensureVisible(item);
+                          await new Promise((resolve) =>
+                            requestAnimationFrame(() =>
+                              requestAnimationFrame(resolve)
+                            )
+                          );
+
+                          const dom = tree.DOMFrom(item);
+                          if (!dom) {
+                            throw new Error(
+                              'Server DOM node was not rendered for: ' + path
+                            );
+                          }
+
+                          const data = tree.itemData(item) || {};
+                          const rect = dom.getBoundingClientRect();
+                          dom.dispatchEvent(
+                            new MouseEvent('contextmenu', {
+                              bubbles: true,
+                              cancelable: true,
+                              button: 2,
+                              buttons: 2,
+                              clientX: rect.left + Math.min(24, rect.width / 2),
+                              clientY: rect.top + Math.min(12, rect.height / 2),
+                            })
+                          );
+
+                          return {
+                            connected: Boolean(data.connected),
+                            icon: data.icon || '',
+                            label:
+                              data._label
+                              ?? data.label
+                              ?? item.fileName
+                              ?? '',
+                            domFound: true,
+                            path: item.path || path,
+                          };
+                        }""",
+                        {"path": server_path},
+                    )
+
+                def read_server_model_state():
+                    return page.evaluate(
+                        """({path}) => {
+                          const tree = window.pgAdmin?.Browser?.tree;
+                          if (!tree) {
+                            throw new Error(
+                              'pgAdmin Browser tree is unavailable'
+                            );
+                          }
+                          const item = tree.findNode(path);
+                          if (!item) {
+                            throw new Error(
+                              'Server tree node not found: ' + path
+                            );
+                          }
+                          const data = tree.itemData(item) || {};
+                          return {
+                            connected: Boolean(data.connected),
+                            icon: data.icon || '',
+                            label:
+                              data._label
+                              ?? data.label
+                              ?? item.fileName
+                              ?? '',
+                            path: item.path || path,
+                          };
+                        }""",
+                        {"path": server_path},
+                    )
+
                 try:
-                    server_name = page.locator(
-                        ".file-tree .file-entry .file-name"
-                    ).filter(has_text=server_label).first
-                    server_row = server_name.locator(
-                        'xpath=ancestor::div[contains(@class,"file-entry")][1]'
+                    before_state = dispatch_server_context_menu()
+                    initially_connected = bool(
+                        before_state.get("connected")
                     )
-
-                    before_icon = (
-                        server_row.locator(".file-icon")
-                        .first.get_attribute("class")
-                        or ""
-                    )
-
-                    server_row.click(button="right", timeout=10000)
 
                     server_menu = page.locator(
                         'ul[aria-label="Object Context Menu"]'
@@ -953,7 +1031,8 @@ def main():
                     )
                     result["diagnostics"]["existing_server_context_menu"] = {
                         "server": server_label,
-                        "initially_connected": initially_connected,
+                        "path": server_path,
+                        "initial_model_state": before_state,
                         "items": server_menu_items,
                         **menu_visual,
                     }
@@ -986,26 +1065,17 @@ def main():
                     )
 
                     # Right-click selection itself must never alter connection
-                    # state.
+                    # state. Read this from pgAdmin's model, not CSS classes.
                     page.keyboard.press("Escape")
                     page.wait_for_timeout(600)
-                    after_context_icon = (
-                        server_row.locator(".file-icon")
-                        .first.get_attribute("class")
-                        or ""
-                    )
-                    after_context_connected = (
-                        "icon-server-not-connected"
-                        not in after_context_icon
-                        and "icon-shared-server-not-connected"
-                        not in after_context_icon
+                    after_context_state = read_server_model_state()
+                    after_context_connected = bool(
+                        after_context_state.get("connected")
                     )
                     result["diagnostics"]["server_connection_state"] = {
-                        "before_icon": before_icon,
-                        "after_context_icon": after_context_icon,
                         "initially_connected": initially_connected,
-                        "after_context_connected":
-                            after_context_connected,
+                        "before": before_state,
+                        "after_context": after_context_state,
                     }
                     result["checks"]["server_connection_state_preserved"] = (
                         after_context_connected == initially_connected
@@ -1033,7 +1103,7 @@ def main():
                     else:
                         # Re-open the context menu only for a server that was
                         # already connected before the audit.
-                        server_row.click(button="right", timeout=10000)
+                        dispatch_server_context_menu()
                         server_menu = page.locator(
                             'ul[aria-label="Object Context Menu"]'
                             '[data-state="open"]'
@@ -1141,6 +1211,19 @@ def main():
                         )
                         result["screenshots"].append(
                             str(properties_shot)
+                        )
+
+                        after_properties_state = read_server_model_state()
+                        result["diagnostics"][
+                            "server_connection_state"
+                        ]["after_properties"] = after_properties_state
+                        result["checks"][
+                            "server_connection_state_preserved"
+                        ] = (
+                            bool(
+                                after_properties_state.get("connected")
+                            )
+                            == initially_connected
                         )
 
                 except Exception as exc:
