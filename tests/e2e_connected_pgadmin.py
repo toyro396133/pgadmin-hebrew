@@ -284,6 +284,23 @@ def main():
                 query_shot = shots / "09-query-tool.png"
                 page.screenshot(path=str(query_shot), full_page=True)
                 result["screenshots"].append(str(query_shot))
+
+                # Close the empty Query Tool tab so subsequent Object-menu
+                # dialogs run in the normal browser context. No SQL was typed,
+                # so this should not require a save/discard prompt.
+                close_tab = first_visible(
+                    page.locator(
+                        'div[data-dockid="id-main"] '
+                        '.dock-tab.dock-tab-active .dock-tab-close-btn, '
+                        'div[data-dockid="id-main"] '
+                        '.dock-tab.dock-tab-active button[data-label="סגירה"], '
+                        'div[data-dockid="id-main"] '
+                        '.dock-tab.dock-tab-active button[data-label="Close"]'
+                    )
+                )
+                if close_tab is not None:
+                    close_tab.click(timeout=5000)
+                    page.wait_for_timeout(700)
             except Exception as exc:
                 result["checks"]["query_tool_visual"] = {
                     "opened": False,
