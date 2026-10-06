@@ -1413,7 +1413,8 @@ def main():
                 result["checks"].get("server_inventory_loaded", False),
             ]
             result["status"] = "passed" if all(required) else "failed"
-            browser.close()
+            # Do not close the externally launched Electron browser here.
+            # setup-and-test.ps1 owns process shutdown and honors -KeepPgAdmin.
 
     except Exception as exc:
         result["errors"].append(repr(exc))
